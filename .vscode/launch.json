@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Attach",
+            "name": "Attach (Debug) (gdb)",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceRoot}/debug/UXP",
+            "program": "${workspaceRoot}/debug/shell",
             "MIMode": "gdb",
             "miDebuggerPath": "/usr/bin/gdb",
         },
         {
-            "name": "(gdb) Launch",
+            "name": "Launch (Debug) (gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/debug/UXP",
+            "program": "${workspaceRoot}/debug/shell",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
@@ -36,6 +36,31 @@
                     "ignoreFailures": true
                 }
             ]
-        }
+        },
+        {
+            "name": "Test (Debug) (gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/debug/test/shelltest",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/debug/test",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description":  "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
     ]
 }

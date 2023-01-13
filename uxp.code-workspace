@@ -9,13 +9,12 @@
 		"recommendations": [
 			"ms-vscode-remote.remote-wsl",
 			"ms-vscode.cpptools",
-			"xaver.clang-format",
 			"mhutchie.git-graph",
 			"eamodio.gitlens",
 			"twxs.cmake",
 			"ms-vscode.cmake-tools",
 			"notskm.clang-tidy",
-			"matepek.vscode-catch2-test-adapter",
+			"xaver.clang-format",
 			"wayou.vscode-todo-highlight",
 		]
 	},
@@ -34,7 +33,7 @@
 			},
 			{
 				"text": "NOTE",
-				"color": "rgb(102, 205, 170)",
+				"color": "rgb(102, 205, 170)", // cyan
 				"border": "1px solid rgb(102, 205, 170)",
 				"borderRadius": "2px",
 				"backgroundColor": "rgba(0,0,0,0)",
@@ -42,7 +41,7 @@
 			},
 			{
 				"text": "HACK",
-				"color": "rgb(50, 205, 50)",
+				"color": "rgb(50, 205, 50)", // green
 				"border": "1px solid rgb(50, 205, 50)",
 				"borderRadius": "2px",
 				"backgroundColor": "rgba(0,0,0,0)",

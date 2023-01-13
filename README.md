@@ -1,6 +1,7 @@
 # Projekt UXP1A 22Z
 
-# Zespół
+## Zespół
 - Bartłomiej Moroz
 - Jakub Motyka
 - Dawid Sygocki
+- Ksawery Chodyniecki
