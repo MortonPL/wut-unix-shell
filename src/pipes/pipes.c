@@ -9,6 +9,9 @@
 #include <fcntl.h>
 #include <string.h>
 #include <poll.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <stdlib.h>
 
 #define RETURN_ON_ERR(x, y) if (x < 0) return y
 
@@ -31,6 +34,22 @@ int open_out_pipe(char* path) {
     return open(path, O_WRONLY | O_NONBLOCK | __O_CLOEXEC);
 }
 
+int std_in_pipe() {
+    return dup(STDIN_FILENO);
+}
+
+int std_out_pipe() {
+    return dup(STDOUT_FILENO);
+}
+
+int null_in_pipe() {
+    return open(DevNull, O_WRONLY | __O_CLOEXEC);
+}
+
+int null_out_pipe() {
+    return open(DevNull, O_WRONLY | __O_CLOEXEC);
+}
+
 int create_pipe_pair(int* pipe_in, int* pipe_out) {
     char fifo_path[42];
     generate_unique_temporary_filename(fifo_path);
@@ -46,9 +65,10 @@ int create_pipe_pair(int* pipe_in, int* pipe_out) {
     
     *pipe_in = pipe_in_res;
     *pipe_out = pipe_out_res;
+    return 0;
 }
 
-int wait_for_data(int* fd) {
+int wait_for_data(int fd) {
     struct pollfd pfd;
 
     pfd.fd = fd;
@@ -66,7 +86,6 @@ int wait_for_data(int* fd) {
 int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
     int res;
     res = fcntl(pipe_in, F_SETFD, 0);
-    
     RETURN_ON_ERR(res, -1);
     res = fcntl(pipe_out, F_SETFD, 0);
     RETURN_ON_ERR(res, -1);
@@ -106,4 +125,10 @@ int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char
     RETURN_ON_ERR(res, -3);
 
     return 0;
+}
+
+int wait_for_child(pid_t pid) {
+    int status;
+    waitpid(pid, &status, 0);
+    return status;
 }

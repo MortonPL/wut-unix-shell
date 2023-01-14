@@ -1,31 +1,39 @@
 #pragma once
 
+#include <sys/types.h>
+
 /// @brief Path to temporary directory
 extern const char* Temp;
 
 /// @brief Path to dev null device
 extern const char* DevNull;
 
-/// @brief Opens a pipe for reading
-/// @param path Path to the named pipe
-/// @return Same as open()
-int open_in_pipe(char *path);
+/// @brief Clones the stdin pipe
+/// @return Same as dup()
+int std_in_pipe();
 
-/// @brief Opens a pipe for writing
-/// @param path Path to the named pipe
+/// @brief Clones the stdout pipe
+/// @return Same as dup()
+int std_out_pipe();
+
+/// @brief Opens read pipe on /dev/null
 /// @return Same as open()
-int open_out_pipe(char *path);
+int null_in_pipe();
+
+/// @brief Opens write pipe on /dev/null
+/// @return Same as open()
+int null_out_pipe();
 
 /// @brief Creates a new named pipe with attached in and out descriptors
 /// @param pipe_in Pointer to the in pipe descriptor
 /// @param pipe_out Pointer to the out pipe descriptor
 /// @return 0 on success, negative on error
-int create_pipe_pair(int* pipe_in, int* pipe_out);
+int create_pipe_pair(int *pipe_in, int *pipe_out);
 
 /// @brief Waits for descriptor to contain data or close
 /// @param fd File descriptor to watch
 /// @return 0 on data or close, negative on error
-int wait_for_data(int *fd);
+int wait_for_data(int fd);
 
 /// @brief Signature of a function that can be executed as a command
 typedef int (*InternalCommand)(const char *file, char *const *argv, char *const *envp);
@@ -39,3 +47,8 @@ typedef int (*InternalCommand)(const char *file, char *const *argv, char *const 
 /// @param envp Same as execvpe
 /// @return Child PID on success, negative on error
 int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp);
+
+/// @brief Waits for child process with specific pid to finish
+/// @param pid PID of the child process
+/// @return Closed process status
+int wait_for_child(pid_t pid);
