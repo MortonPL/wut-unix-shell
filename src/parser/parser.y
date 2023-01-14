@@ -17,9 +17,9 @@
 %token WHITESPACES
 %token VARIABLE_WRITE
 
-%left '|'
-%left '<' '>'
-%precedence ';'
+%left OP_PIPE
+%precedence OP_PULL OP_PUSH
+%precedence OP_EXPR_END
 
 
 /* GRAMMAR RULES */
@@ -32,7 +32,7 @@ expressions:
 
 expressions.trail.rep:
   %empty
-| ';' expression expressions.trail.rep
+| OP_EXPR_END expression expressions.trail.rep
 ;
 
 expression:
@@ -45,7 +45,7 @@ pipe_expression:
 
 pipe_expression.trail.rep:
   %empty
-| '|' whitespaces.opt command pipe_expression.trail.rep
+| OP_PIPE whitespaces.opt command pipe_expression.trail.rep
 ;
 
 command:
@@ -83,8 +83,8 @@ argument:
 ;
 
 redirection:
-  '<' whitespaces.opt string
-| '>' whitespaces.opt string
+  OP_PULL whitespaces.opt string
+| OP_PUSH whitespaces.opt string
 ;
 
 string:

@@ -109,10 +109,10 @@ enum yysymbol_kind_t
   YYSYMBOL_VARIABLE_READ = 4,              /* VARIABLE_READ  */
   YYSYMBOL_WHITESPACES = 5,                /* WHITESPACES  */
   YYSYMBOL_VARIABLE_WRITE = 6,             /* VARIABLE_WRITE  */
-  YYSYMBOL_7_ = 7,                         /* '|'  */
-  YYSYMBOL_8_ = 8,                         /* '<'  */
-  YYSYMBOL_9_ = 9,                         /* '>'  */
-  YYSYMBOL_10_ = 10,                       /* ';'  */
+  YYSYMBOL_OP_PIPE = 7,                    /* OP_PIPE  */
+  YYSYMBOL_OP_PULL = 8,                    /* OP_PULL  */
+  YYSYMBOL_OP_PUSH = 9,                    /* OP_PUSH  */
+  YYSYMBOL_OP_EXPR_END = 10,               /* OP_EXPR_END  */
   YYSYMBOL_YYACCEPT = 11,                  /* $accept  */
   YYSYMBOL_expressions = 12,               /* expressions  */
   YYSYMBOL_13_expressions_trail_rep = 13,  /* expressions.trail.rep  */
@@ -464,7 +464,7 @@ union yyalloc
 #define YYNSTATES  45
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   261
+#define YYMAXUTOK   265
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -483,14 +483,14 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,    10,
-       8,     2,     9,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     7,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -504,7 +504,7 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6
+       5,     6,     7,     8,     9,    10
 };
 
 #if YYDEBUG
@@ -531,9 +531,10 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
 static const char *const yytname[] =
 {
   "\"end of file\"", "error", "\"invalid token\"", "STRING_PART",
-  "VARIABLE_READ", "WHITESPACES", "VARIABLE_WRITE", "'|'", "'<'", "'>'",
-  "';'", "$accept", "expressions", "expressions.trail.rep", "expression",
-  "pipe_expression", "pipe_expression.trail.rep", "command",
+  "VARIABLE_READ", "WHITESPACES", "VARIABLE_WRITE", "OP_PIPE", "OP_PULL",
+  "OP_PUSH", "OP_EXPR_END", "$accept", "expressions",
+  "expressions.trail.rep", "expression", "pipe_expression",
+  "pipe_expression.trail.rep", "command",
   "assignments_or_arguments.trail.rep", "assignments_or_arguments.opt",
   "assignment_or_argument", "assignment", "argument_or_redirection",
   "argument", "redirection", "string", "string_part.rep", "string_part",
@@ -552,8 +553,8 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    (internal) symbol number NUM (which must be that of a token).  */
 static const yytype_int16 yytoknum[] =
 {
-       0,   256,   257,   258,   259,   260,   261,   124,    60,    62,
-      59
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265
 };
 #endif
 
@@ -1117,7 +1118,7 @@ yyreduce:
   switch (yyn)
     {
 
-#line 1121 "parser.tab.c"
+#line 1122 "parser.tab.c"
 
       default: break;
     }
