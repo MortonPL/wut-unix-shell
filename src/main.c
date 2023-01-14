@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include "lib/mmem.h"
 #include "parser/parser.h"
+#include "pipes/pipes.h"
 
 typedef int (*helloer)(const char* msg, ...);
 
@@ -37,11 +38,6 @@ void superprint(helloer fun)
 
 int main()
 {
-    AutoEntry(GlobalMemContext);
-    superprint(printf);
-
-    AutoExit(GlobalMemContext);
-
     while (1)
     {
         int res = Scan();
