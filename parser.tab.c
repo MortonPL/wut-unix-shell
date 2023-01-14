@@ -1325,5 +1325,5 @@ int main(void)
 
 void yyerror(char const *s)
 {
-  fprintf(stderr, "ERROR: %s\n");
+  fprintf(stderr, "ERROR: %s\n", s);
 }
