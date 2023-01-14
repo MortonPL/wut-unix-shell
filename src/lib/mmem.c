@@ -6,7 +6,7 @@ typedef struct MemData
     void* pData;
     size_t life;
     destructor pDestructor;
-    char selfManagedData;
+    char whoManagesData;
 } MemData;
 
 typedef struct realMemContext
@@ -22,7 +22,7 @@ enum
 
 enum
 {
-    notSelfManaged = 0,
+    userManaged = 0,
     selfManaged = 1,
 };
 
@@ -31,16 +31,15 @@ realMemContext contextsContext = {.pHead = NULL};
 MemContext GlobalMemContext = &globalMemContext;
 MemContext ContextsContext = &contextsContext;
 
-// in 2nd param: 0 for malloc, 1 for calloc
-void* autoAlloc(realMemContext* pContext, size_t size, destructor pDestructor, char mallocOrCalloc, char selfManagedData)
+void* autoAlloc(realMemContext* pContext, size_t size, destructor pDestructor, char mallocOrCalloc, char whoManagesData)
 {
     if (pContext == NULL)
         return NULL;
 
-    void* pData;
-    if (!mallocOrCalloc)
+    void* pData = NULL;
+    if (mallocOrCalloc == useMalloc)
         pData = malloc(size);
-    else
+    else if (mallocOrCalloc == useCalloc)
         pData = calloc(size, 1);
     if (pData == NULL)
         return NULL;
@@ -55,7 +54,7 @@ void* autoAlloc(realMemContext* pContext, size_t size, destructor pDestructor, c
     pNewHead->pData = pData;
     pNewHead->life = 1;
     pNewHead->pDestructor = pDestructor;
-    pNewHead->selfManagedData = selfManagedData;
+    pNewHead->whoManagesData = whoManagesData;
     pContext->pHead = pNewHead;
     return pNewHead->pData;
 }
@@ -76,12 +75,12 @@ void memContextDestructor(void* pContext)
 
 void* AutoMalloc(realMemContext* pContext, size_t size, destructor pDestructor)
 {
-    return autoAlloc(pContext, size, pDestructor, useMalloc, notSelfManaged);
+    return autoAlloc(pContext, size, pDestructor, useMalloc, userManaged);
 }
 
 void* AutoCalloc(realMemContext* pContext, size_t size, destructor pDestructor)
 {
-    return autoAlloc(pContext, size, pDestructor, useCalloc, notSelfManaged);
+    return autoAlloc(pContext, size, pDestructor, useCalloc, userManaged);
 }
 
 long* AutoInsert(realMemContext* pContext, long data, destructor pDestructor)
@@ -137,7 +136,7 @@ void AutoExit(realMemContext* pContext)
 
             pNext = pNode->pNext;
             pNode->pDestructor(pNode->pData);
-            if (pNode->selfManagedData)
+            if (pNode->whoManagesData == selfManaged)
                 free(pNode->pData);
             free(pNode);
         }
