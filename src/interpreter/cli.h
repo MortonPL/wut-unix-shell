@@ -4,4 +4,4 @@
 #include "../lib/mmem.h"
 #include "interpreter.h"
 
-void interface();
+void interface(const int isBatch);

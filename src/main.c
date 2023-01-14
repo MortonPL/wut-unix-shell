@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "lib/mmem.h"
 #include "interpreter/cli.h"
@@ -30,7 +31,13 @@ int main(const int argumentsCount, char *argumentsValues[])
     AutoEntry(GlobalMemContext);
     superprint(printf);
 
-    interface();
+    int isBatch = 0;
+    if (argumentsCount > 1) {
+        if (strcmp(argumentsValues[1], "-c") == 0) {
+            isBatch = 1;
+        }
+    }
+    interface(isBatch);
 
     AutoExit(GlobalMemContext);
     return 0;

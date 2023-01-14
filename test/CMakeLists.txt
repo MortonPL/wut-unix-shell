@@ -4,6 +4,7 @@ enable_testing()
 set(TEST_FILES
     example.c
     main.c
+    strpls.c
 )
 
 add_executable(${TEST_NAME} ${TEST_FILES})
