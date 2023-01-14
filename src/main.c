@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "lib/mmem.h"
-#include "lexer/lexer.h"
+#include "parser/parser.h"
 
 typedef int (*helloer)(const char* msg, ...);
 

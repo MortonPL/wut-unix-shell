@@ -1,3 +1,5 @@
+/* PROLOGUE */
+
 %option nounput
 %option noinput
 
@@ -5,10 +7,14 @@
     #include "parser.tab.h"
 %}
 
-/*variable:     [a-zA-z][a-zA-Z0-9_]*       */
-/*whitespace:   [\x20\r\t\f\v]+             */
+/* DECLARATIONS */
 
-%% /*rules*/
+/* LEXICAL RULES */
+
+%%
+    /*variable:     [a-zA-z][a-zA-Z0-9_]*       */
+    /*whitespace:   [\x20\r\t\f\v]+             */
+
 ";"                         { return OP_EXPR_END; }
 "|"                         { return OP_PIPE; }
 "<"                         { return OP_PULL; }
@@ -22,4 +28,6 @@
 \n                          { /* ignore EOL? */ }
 .*                          { return YYUNDEF; }
 
-%% /*user actions*/
+%%
+
+/* EPILOGUE */

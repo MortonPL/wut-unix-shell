@@ -5,7 +5,7 @@ set_target_properties(fl PROPERTIES
 )
 
 execute_process(
-    COMMAND "flex/src/flex" "main.lex"
+    COMMAND "flex/src/flex" "scanner.lex"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     RESULT_VARIABLE RES)
 if(NOT (RES EQUAL 0))
@@ -13,13 +13,13 @@ if(NOT (RES EQUAL 0))
 endif()
 
 # sources
-set(SRC_LEXER_FILES
+set(SRC_PARSER_FILES
     lex.yy.c
-    lexer.c
+    parser.c
     parser.tab.c
 )
 
 # add the library version
-add_library(lexer ${SRC_LEXER_FILES})
-target_include_directories(lexer PUBLIC "${CMAKE_SOURCE_DIR}/src/lib")
-target_link_libraries(lexer PRIVATE fl)
+add_library(parser ${SRC_PARSER_FILES})
+target_include_directories(parser PUBLIC "${CMAKE_SOURCE_DIR}/src/lib")
+target_link_libraries(parser PRIVATE fl)

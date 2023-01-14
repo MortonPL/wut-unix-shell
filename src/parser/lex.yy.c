@@ -459,14 +459,15 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "main.lex"
+#line 1 "scanner.lex"
+/* PROLOGUE */
 #define YY_NO_INPUT 1
-#line 5 "main.lex"
+#line 7 "scanner.lex"
     #include "parser.tab.h"
-#line 466 "lex.yy.c"
-/*variable:     [a-zA-z][a-zA-Z0-9_]*       */
-/*whitespace:   [\x20\r\t\f\v]+             */
-#line 469 "lex.yy.c"
+#line 467 "lex.yy.c"
+/* DECLARATIONS */
+/* LEXICAL RULES */
+#line 470 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -681,9 +682,13 @@ YY_DECL
 		}
 
 	{
-#line 11 "main.lex"
+#line 14 "scanner.lex"
 
-#line 686 "lex.yy.c"
+#line 16 "scanner.lex"
+    /*variable:     [a-zA-z][a-zA-Z0-9_]*       */
+    /*whitespace:   [\x20\r\t\f\v]+             */
+
+#line 691 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -742,72 +747,72 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 12 "main.lex"
+#line 19 "scanner.lex"
 { return OP_EXPR_END; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 13 "main.lex"
+#line 20 "scanner.lex"
 { return OP_PIPE; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 14 "main.lex"
+#line 21 "scanner.lex"
 { return OP_PULL; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 15 "main.lex"
+#line 22 "scanner.lex"
 { return OP_PUSH; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 16 "main.lex"
+#line 23 "scanner.lex"
 { yytext[strlen(yytext)-1] = '\0'; yylval=++yytext; return STRING_PART; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 17 "main.lex"
+#line 24 "scanner.lex"
 { yylval=++yytext;  return STRING_PART; }
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 18 "main.lex"
+#line 25 "scanner.lex"
 { yylval=yytext;    return STRING_PART; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 19 "main.lex"
+#line 26 "scanner.lex"
 { yylval=++yytext;  return VARIABLE_READ; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 20 "main.lex"
+#line 27 "scanner.lex"
 { yytext[strlen(yytext)-1] = '\0'; yylval=yytext; return VARIABLE_WRITE; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 21 "main.lex"
+#line 28 "scanner.lex"
 { return WHITESPACES; }
 	YY_BREAK
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 22 "main.lex"
+#line 29 "scanner.lex"
 { /* ignore EOL? */ }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 23 "main.lex"
+#line 30 "scanner.lex"
 { return YYUNDEF; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 25 "main.lex"
+#line 32 "scanner.lex"
 ECHO;
 	YY_BREAK
-#line 810 "lex.yy.c"
+#line 815 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1775,6 +1780,8 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 25 "main.lex"
+#line 32 "scanner.lex"
 
+
+/* EPILOGUE */
 
