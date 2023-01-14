@@ -67,7 +67,7 @@
 
 
 /* First part of user prologue.  */
-#line 3 "src/parser/parser.y"
+#line 3 "parser.y"
 
   #include <stdio.h>
 
@@ -1312,13 +1312,13 @@ yyreturn:
   return yyresult;
 }
 
-#line 109 "src/parser/parser.y"
+#line 109 "parser.y"
 
 
 
 /* EPILOGUE */
 
-int main(void)
+int bisonMain(void)
 {
   return yyparse();
 }

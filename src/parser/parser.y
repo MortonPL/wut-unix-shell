@@ -111,7 +111,7 @@ whitespaces.opt:
 
 /* EPILOGUE */
 
-int main(void)
+int bisonMain(void)
 {
   return yyparse();
 }
