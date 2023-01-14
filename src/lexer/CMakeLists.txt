@@ -16,6 +16,7 @@ endif()
 set(SRC_LEXER_FILES
     lex.yy.c
     lexer.c
+    parser.tab.c
 )
 
 # add the library version

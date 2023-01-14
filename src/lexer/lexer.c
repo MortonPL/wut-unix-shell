@@ -2,5 +2,5 @@
 
 int Scan()
 {
-    return yylex();
+    return bisonMain();
 }

@@ -44,7 +44,7 @@ int main()
 
     while (1)
     {
-        printf("%d", Scan());
+        Scan();
     }
 
     return 0;
