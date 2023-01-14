@@ -25,7 +25,7 @@ void superprint(helloer fun)
     // won't leak!
 }
 
-int main()
+int main(const int argumentsCount, char *argumentsValues[])
 {
     AutoEntry(GlobalMemContext);
     superprint(printf);

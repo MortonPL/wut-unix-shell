@@ -5,6 +5,16 @@
 
 char previousWorkingDirectory[COMMAND_SIZE] = "~";
 
+void getFlags(char* flags, char** prompt) {
+    unsigned long currentFlag = 0;
+    while (prompt != NULL && strstr(*prompt, "-") == *prompt && currentFlag < FLAG_AMOUNT) {
+        char* flag = strsep(prompt, " ");
+        removeAllOccurences(flag, '-');
+        strcpy(&flags[currentFlag], flag);
+        currentFlag += strlen(flag);
+    }
+}
+
 void changeDirectory(char* cwd, const char* path) {
     if (strstr(path, "-") == path) {
         strswp(cwd, previousWorkingDirectory);
@@ -49,13 +59,7 @@ void interpret(char* cwd, char* prompt) {
         printWorkingDirectory(cwd);
     } else if (strstr(command, "echo") == command) {
         char flags[FLAG_AMOUNT + 1] = "--\0";
-        unsigned long currentFlag = 0;
-        while (prompt != NULL && strstr(prompt, "-") == prompt && currentFlag < FLAG_AMOUNT) {
-            char* flag = strsep(&prompt, " ");
-            removeAllOccurences(flag, '-');
-            strcpy(&flags[currentFlag], flag);
-            currentFlag += strlen(flag);
-        }
+        getFlags(flags, &prompt);
         print(prompt, flags);
     } else if (strstr(command, "exit") == command) {
         // handled in interface()
