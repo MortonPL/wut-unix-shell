@@ -1,14 +1,15 @@
-%{  // prologue
+/* PROLOGUE */
 
+%{
   #include <stdio.h>
 
   int yylex(void);
-  void yyerror(char const*);
-
+  void yyerror(char const *s);
 %}
 
 
-// declarations
+/* DECLARATIONS */
+
 %define api.value.type {char*}
 
 %token STRING_PART
@@ -21,7 +22,9 @@
 %precedence ';'
 
 
-%%  // grammar rules
+/* GRAMMAR RULES */
+
+%%
 
 expressions:
   expression expressions.trail.rep
@@ -33,52 +36,55 @@ expressions.trail.rep:
 ;
 
 expression:
-  assignments.opt pipe_expression
+  pipe_expression
 ;
 
-assignments.opt:
-  %empty
-| assignment assignments.trail.rep
+pipe_expression:
+  command pipe_expression.trail.rep
 ;
 
-assignments.trail.rep:
+pipe_expression.trail.rep:
   %empty
-| assignment assignments.trail.rep
+| '|' whitespaces.opt command pipe_expression.trail.rep
+;
+
+command:
+  assignment assignments_or_arguments.trail.rep
+| argument assignments_or_arguments.trail.rep
+;
+
+assignments_or_arguments.trail.rep:
+  %empty
+| WHITESPACES assignments_or_arguments.opt
+| redirection assignments_or_arguments.trail.rep
+;
+
+assignments_or_arguments.opt:
+  %empty
+| assignment_or_argument assignments_or_arguments.trail.rep
+;
+
+assignment_or_argument:
+  assignment
+| argument_or_redirection
 ;
 
 assignment:
   VARIABLE_WRITE string
 ;
 
-pipe_expression:
-  redirection_expression pipe_expression.trail.rep
+argument_or_redirection:
+  argument
+| redirection
 ;
 
-pipe_expression.trail.rep:
-  %empty
-| '|' whitespaces.opt redirection_expression pipe_expression.trail.rep
-;
-
-redirection_expression:
-  command redirection_expression.trail.rep
-;
-
-redirection_expression.trail.rep:
-  %empty
-| redirection string redirection_expression.trail.rep
-;
-
-command:
-  command_string command.trail.rep
-;
-
-command.trail.rep:
-  %empty
-| string command.trail.rep
-;
-
-command_string:
+argument:
   string
+;
+
+redirection:
+  '<' whitespaces.opt string
+| '>' whitespaces.opt string
 ;
 
 string:
@@ -86,18 +92,13 @@ string:
 ;
 
 string_part.rep:
-  whitespaces.opt
+  %empty
 | string_part string_part.rep
 ;
 
 string_part:
   STRING_PART
 | VARIABLE_READ
-;
-
-redirection:
-  '<' whitespaces.opt
-| '>' whitespaces.opt
 ;
 
 whitespaces.opt:
@@ -107,14 +108,15 @@ whitespaces.opt:
 
 %%
 
-// epilogue
 
-int main (void)
+/* EPILOGUE */
+
+int main(void)
 {
   return yyparse();
 }
 
-void yyerror (char *const s)
+void yyerror(char const *s)
 {
-  fprintf(stderr, "ERROR on line %d: %s\n", lineno);
+  fprintf(stderr, "ERROR: %s\n");
 }
