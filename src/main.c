@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "lib/mmem.h"
+#include "interpreter/cli.h"
 
 typedef int (*helloer)(const char* msg, ...);
 
@@ -28,6 +29,8 @@ int main()
 {
     AutoEntry(GlobalMemContext);
     superprint(printf);
+
+    interface();
 
     AutoExit(GlobalMemContext);
     return 0;

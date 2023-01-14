@@ -5,6 +5,7 @@ add_subdirectory(lib)
 set(SRC_FILES
     # main
     main.c
+    interpreter/cli.c
 )
 
 # add the library version
