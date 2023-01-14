@@ -6,6 +6,7 @@ set(SRC_FILES
     # main
     main.c
     interpreter/cli.c
+    interpreter/interpreter.c
 )
 
 # add the library version
