@@ -25,3 +25,4 @@ flex/src/stamp-h1
 flex/tests/.deps/
 flex/tests/Makefile
 flex/tools/Makefile
+flex/auto*

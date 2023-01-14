@@ -82,7 +82,7 @@ parse_args() {
 do_deps() {
     if [ $DEPENDENCIES -eq 1 ]; then
         echo "Building flex...";
-        cd ../src/lexer/flex;
+        cd ../src/parser/flex;
         ./configure;
         make;
         cd ../../../$DIR;
