@@ -1,9 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "lib/mmem.h"
 
 typedef int (*helloer)(const char* msg, ...);
+
+void closer(void* pFd)
+{
+    int fd = (int)*(long*)pFd;
+    close(fd);
+}
 
 void superprint(helloer fun)
 {
@@ -18,6 +25,8 @@ void superprint(helloer fun)
     x[4] = 'A';
     x[5] = '\0';
     AutoMalloc(ctx, 100, free);
+
+    int fd = *(int*)AutoInsert(ctx, open("/dev/zero", O_RDONLY), closer);
 
     fun("Hello %s!\n", x);
     AutoExit(ctx);

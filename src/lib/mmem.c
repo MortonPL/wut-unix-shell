@@ -6,6 +6,7 @@ typedef struct MemData
     void* pData;
     size_t life;
     destructor pDestructor;
+    char selfManagedData;
 } MemData;
 
 typedef struct realMemContext
@@ -13,6 +14,17 @@ typedef struct realMemContext
     struct MemData* pHead;
 } realMemContext;
 
+enum 
+{
+    useMalloc = 0,
+    useCalloc = 1,
+};
+
+enum
+{
+    notSelfManaged = 0,
+    selfManaged = 1,
+};
 
 realMemContext globalMemContext = {.pHead = NULL};
 realMemContext contextsContext = {.pHead = NULL};
@@ -20,7 +32,7 @@ MemContext GlobalMemContext = &globalMemContext;
 MemContext ContextsContext = &contextsContext;
 
 // in 2nd param: 0 for malloc, 1 for calloc
-void* autoAlloc(realMemContext* pContext, size_t size, destructor pDestructor, char mallocOrCalloc)
+void* autoAlloc(realMemContext* pContext, size_t size, destructor pDestructor, char mallocOrCalloc, char selfManagedData)
 {
     if (pContext == NULL)
         return NULL;
@@ -43,6 +55,7 @@ void* autoAlloc(realMemContext* pContext, size_t size, destructor pDestructor, c
     pNewHead->pData = pData;
     pNewHead->life = 1;
     pNewHead->pDestructor = pDestructor;
+    pNewHead->selfManagedData = selfManagedData;
     pContext->pHead = pNewHead;
     return pNewHead->pData;
 }
@@ -63,12 +76,21 @@ void memContextDestructor(void* pContext)
 
 void* AutoMalloc(realMemContext* pContext, size_t size, destructor pDestructor)
 {
-    return autoAlloc(pContext, size, pDestructor, 0);
+    return autoAlloc(pContext, size, pDestructor, useMalloc, notSelfManaged);
 }
 
 void* AutoCalloc(realMemContext* pContext, size_t size, destructor pDestructor)
 {
-    return autoAlloc(pContext, size, pDestructor, 1);
+    return autoAlloc(pContext, size, pDestructor, useCalloc, notSelfManaged);
+}
+
+long* AutoInsert(realMemContext* pContext, long data, destructor pDestructor)
+{
+    void* ptr = autoAlloc(pContext, sizeof(data), pDestructor, useMalloc, selfManaged);
+    if (ptr == NULL)
+        return NULL;
+    *(long*)ptr = data;
+    return (long*)ptr;
 }
 
 realMemContext* MakeContext()
@@ -115,6 +137,8 @@ void AutoExit(realMemContext* pContext)
 
             pNext = pNode->pNext;
             pNode->pDestructor(pNode->pData);
+            if (pNode->selfManagedData)
+                free(pNode->pData);
             free(pNode);
         }
         else

@@ -7,10 +7,11 @@ Opinionated style guide by yours truly.
 
 ## Naming conventions
 * Preprocessor macros: SCREAMING_SNAKE_CASE.
-* Local variables and local (or `static`) functions: camelCase.
-* Global variables and global functions: PascalCase.
-* Struct names and struct members: PascalCase.
-* Pointers: pPascalCase.
+* Local variables, enums and local (or `static`) functions: camelCase.
+* Global variables, enums and global functions: PascalCase.
+* Local struct names and struct members: camelCase.
+* Global struct names and struct members: PascalCase.
+* Pointers: pPascalCase or `ptr` for trivial, temporary ones.
 
 ## Preprocessor
 * We use `#pragma once` instead of `#ifndef FILE_H #define FILE_H #endif` pattern.
