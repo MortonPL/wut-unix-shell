@@ -6,7 +6,6 @@ flex/examples/Makefile
 flex/examples/fastwc/Makefile
 flex/examples/manual/Makefile
 *.Po
-*.po
 flex/libtool
 flex/po/Makefile
 flex/po/Makefile.in
