@@ -63,11 +63,19 @@ int dump_info_command(const char *file, char *const *argv, char *const *envp) {
     return 0;
 }
 
-int commandB(const char *file, char *const *argv, char *const *envp) {
+int delayed_write_command(const char *file, char *const *argv, char *const *envp) {
+    sleep(3);
+
+    printf("Delayed message.\n");
+
     return 0;
 }
 
-int commandC(const char *file, char *const *argv, char *const *envp) {
+int delayed_close_command(const char *file, char *const *argv, char *const *envp) {
+    sleep(3);
+
+    close(STDOUT_FILENO);
+
     return 0;
 }
 
@@ -79,14 +87,38 @@ int main()
     //     printf("%d\n", res);
     // }
 
-    char *args[] = {"Arg1", "Arg2", NULL};
-    int res;
-    int pipe_in, pipe_out;
-    res = create_pipe_pair(&pipe_in, &pipe_out);
-    pid_t proc = attach_command(pipe_in, std_out_pipe(), dump_info_command, "Dump Info Command", args, NULL);
-    char buf[] = "Hello from STDIN!\n";
-    write(pipe_out, buf, sizeof buf);
-    wait_for_child(proc);
+    // Basic info dump
+    // char *args[] = {"Arg1", "Arg2", NULL};
+    // extern char **environ;
+    // int pipe_in, pipe_out;
+    // create_pipe_pair(&pipe_in, &pipe_out);
+    // pid_t cmd = attach_command(pipe_in, std_out_pipe(), dump_info_command, "Dump Info Command", args, environ);
+    // char buf[] = "Hello from STDIN!\n";
+    // write(pipe_out, buf, sizeof buf);
+    // wait_for_child(cmd);
+
+    // Wait for data on pipe
+    // int pipe_in, pipe_out;
+    // create_pipe_pair(&pipe_in, &pipe_out);
+    // pid_t cmd1 = attach_command(null_in_pipe(), pipe_out, delayed_write_command, "Delayed Write Command", NULL, NULL);
+    // wait_for_data(pipe_in);
+    // pid_t cmd2 = attach_command(pipe_in, std_out_pipe(), dump_info_command, "Dump Info Command", NULL, NULL);
+    // wait_for_child(cmd1);
+    // wait_for_child(cmd2);
+
+    // Wait for closed pipe
+    // int pipe_in, pipe_out;
+    // create_pipe_pair(&pipe_in, &pipe_out);
+    // pid_t cmd1 = attach_command(null_in_pipe(), pipe_out, delayed_close_command, "Delayed Close Command", NULL, NULL);
+    // wait_for_data(pipe_in);
+    // pid_t cmd2 = attach_command(pipe_in, std_out_pipe(), dump_info_command, "Dump Info Command", NULL, NULL);
+    // wait_for_child(cmd1);
+    // wait_for_child(cmd2);
+
+    // System command call
+    char *args[] = {"echo", "Current", "path", getenv("PWD"), NULL};
+    pid_t cmd = attach_command(null_in_pipe(), std_out_pipe(), NULL, "echo", args, NULL);
+    wait_for_child(cmd);
 
     return 0;
 }

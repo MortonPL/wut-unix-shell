@@ -5,7 +5,7 @@
 /// @brief Path to temporary directory
 extern const char* Temp;
 
-/// @brief Path to dev null device
+/// @brief Path to /dev/null device
 extern const char* DevNull;
 
 /// @brief Clones the stdin pipe
