@@ -7,7 +7,7 @@ Opinionated style guide by yours truly.
 
 ## Naming conventions
 * Preprocessor macros: SCREAMING_SNAKE_CASE.
-* Local variables and local (`static`) functions: camelCase.
+* Local variables and local (or `static`) functions: camelCase.
 * Global variables and global functions: PascalCase.
 * Struct names and struct members: PascalCase.
 * Pointers: pPascalCase.
