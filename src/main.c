@@ -44,7 +44,8 @@ int main()
 
     while (1)
     {
-        Scan();
+        int res = Scan();
+        printf("%d\n", res);
     }
 
     return 0;

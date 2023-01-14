@@ -13,13 +13,13 @@
 "|"                         { return OP_PIPE; }
 "<"                         { return OP_PULL; }
 ">"                         { return OP_PUSH; }
-\'(.)*\'                    { yylval=yytext;    return QUOTED_STRING; }
-\\.                         { yylval=++yytext;  return ESCAPED_STRING; }
-[^\x20\r\t\f\v<>|\\'$;]+    { yylval=yytext;    return UNQUOTED_STRING; }
-[^\x20\r\t\f\v<>|\\'$;=]+   { yylval=yytext;    return UNQUOTED_STRING_NO_EQ; }
+\'(.)*\'                    { yytext[strlen(yytext)-1] = '\0'; yylval=++yytext; return STRING_PART; }
+\\.                         { yylval=++yytext;  return STRING_PART; }
+[^\x20\r\t\f\v<>|\\'$;]+    { yylval=yytext;    return STRING_PART; }
 "$"[a-zA-z][a-zA-Z0-9_]*    { yylval=++yytext;  return VARIABLE_READ; }
-[a-zA-z][a-zA-Z0-9_]*"="    { yylval=yytext;    return VARIABLE_WRITE; }
+[a-zA-z][a-zA-Z0-9_]*"="    { yytext[strlen(yytext)-1] = '\0'; yylval=yytext; return VARIABLE_WRITE; }
 [\x20\r\t\f\v]+             { return WHITESPACES; }
-\n                          { return YYUNDEF; }
+\n                          { /* ignore EOL? */ }
+.*                          { return YYUNDEF; }
 
 %% /*user actions*/
