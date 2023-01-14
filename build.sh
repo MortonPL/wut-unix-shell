@@ -58,7 +58,7 @@ parse_args() {
         *)
             case "$parse_mode" in
             "r")
-                OTHER_USER="${!arg_num}";
+                ___UNUSED="${!arg_num}";
                 parse_mode="";
                 ;;
             *)

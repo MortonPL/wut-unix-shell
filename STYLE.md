@@ -4,6 +4,7 @@ Opinionated style guide by yours truly.
 
 ## Starting remarks
 * We compile with `-Wall -Werror -Wextra -Wpedantic -Wconversion` for a reason.
+* We use `TODO`, `NOTE`, `HACK` and `DEBUG` in comments to mark code if necessary. If you're using VS Code, the workspace recommends an extension for this.
 
 ## Naming conventions
 * Preprocessor macros: SCREAMING_SNAKE_CASE.
@@ -17,6 +18,7 @@ Opinionated style guide by yours truly.
 * We use `#pragma once` instead of `#ifndef FILE_H #define FILE_H #endif` pattern.
 * We use `<foo.h>` for system headers and `"foo.h"` for custom headers.
 * We use preprocessor directives only for `#pragma once`, `#include` and `#define`.
+* When using `#define`, we use `#undef` as soon as possible.
 * We include same-named header first (if applicable), then system headers, then custom headers, in this order.
 
 In example:
@@ -30,3 +32,4 @@ In example:
 ## Variables
 * We use `const` wherever possible (including `const type* const` for constant pointers).
 * We always pass structs to functions as pointers.
+* We don't like magic values. We like enums and `const` variables.
