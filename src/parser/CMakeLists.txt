@@ -1,11 +1,5 @@
-add_library(fl STATIC IMPORTED)
-set_target_properties(fl PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/flex/src/.libs/libfl.a"
-  #INTERFACE_INCLUDE_DIRECTORIES
-)
-
 execute_process(
-    COMMAND "flex/src/flex" "scanner.lex"
+    COMMAND "flex" "scanner.lex"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     RESULT_VARIABLE RES)
 if(NOT (RES EQUAL 0))

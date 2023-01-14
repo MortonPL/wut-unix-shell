@@ -1,7 +1,6 @@
 # MULTI-PURPOSE PROJECT SCRIPT
 # Init variables
 CONFIGURE=0;    # Configure CMake
-DEPENDENCIES=0; # Build flex
 TEST=0          # Run tests
 BUILD_TYPE="";  # CMake build type
 DIR="";         # Build output directory
@@ -19,7 +18,6 @@ print_help() {
     echo "    shelltest";
     echo "Options:";
     echo "    -c, --configure                      Force (re)generate CMake configuration files";
-    echo "    -d, --dependencies                   Force rebuild flex";
     echo "    -h, --help                           Display this message";
     echo "    -t, --tests                          Run tests after build";
 }
@@ -37,9 +35,6 @@ parse_args() {
             ;;
         "-c" | "--configure")
             CONFIGURE=1;
-            ;;
-        "-d" | "--dependencies")
-            DEPENDENCIES=1;
             ;;
         "-t" | "--tests")
             TEST=1;
@@ -76,17 +71,6 @@ parse_args() {
     if [ "$parse_mode" != "" ]; then
         echo "Invalid arguments. One or more options are missing values.";
         exit;
-    fi
-}
-
-do_deps() {
-    if [ $DEPENDENCIES -eq 1 ]; then
-        echo "Building flex...";
-        cd ../src/parser/flex;
-        ./configure;
-        make;
-        cd ../../../$DIR;
-        echo "Done.";
     fi
 }
 
@@ -142,8 +126,6 @@ fi
 # Zip resources to .XRS
 mkdir -p $DIR;
 cd $DIR;
-# Build dependencies (opt-in)
-do_deps;
 # Generate CMake build configuration (opt-in)
 do_config;
 # Build the project

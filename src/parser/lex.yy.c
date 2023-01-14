@@ -1,5 +1,5 @@
 
-#line 2 "lex.yy.c"
+#line 3 "lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -464,10 +464,10 @@ char *yytext;
 #define YY_NO_INPUT 1
 #line 7 "scanner.lex"
     #include "parser.tab.h"
-#line 467 "lex.yy.c"
+#line 468 "lex.yy.c"
 /* DECLARATIONS */
 /* LEXICAL RULES */
-#line 470 "lex.yy.c"
+#line 471 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -688,7 +688,7 @@ YY_DECL
     /*variable:     [a-zA-z][a-zA-Z0-9_]*       */
     /*whitespace:   [\x20\r\t\f\v]+             */
 
-#line 691 "lex.yy.c"
+#line 692 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -812,7 +812,7 @@ YY_RULE_SETUP
 #line 32 "scanner.lex"
 ECHO;
 	YY_BREAK
-#line 815 "lex.yy.c"
+#line 816 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
