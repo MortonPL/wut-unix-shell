@@ -4,8 +4,8 @@
 typedef struct realMemContext* MemContext;
 typedef void (*destructor)(void*);
 
-/// @brief A globally accessible MemContext. Note that it is NOT implicitly updated when chaning scopes.
-MemContext GlobalMemContext;
+/// @brief A globally accessible MemContext. Note that it is NOT implicitly updated when changing scopes.
+extern MemContext GlobalMemContext;
 
 /// @brief Creates a new context to use locally. Context will be destroyed automatically on AutoExit when it exits its scope.
 /// @return New MemContext or NULL on failure.
