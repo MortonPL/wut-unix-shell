@@ -1,9 +1,8 @@
 #include "cli.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define COMMAND_SIZE 20
+#define FLAG_AMOUNT 2
 
 char previousWorkingDirectory[COMMAND_SIZE] = "~";
 
@@ -14,14 +13,14 @@ void strswp(char* first, char* second) {
     strcpy(second, temp);
 }
 
-void removeAllAfter(char* destination, char searched) {
+void removeAllAfter(char* destination, const char searched) {
     char* parent = strrchr(destination, searched);
     if (parent != NULL) {
         *parent = '\0';
     }
 }
 
-void removeAllOccurences(char* destination, char searched) {
+void removeAllOccurences(char* destination, const char searched) {
     int writer = 0;
     int reader = 0;
 
@@ -54,8 +53,13 @@ void printWorkingDirectory(const char* cwd) {
     printf("%s\n", cwd);
 }
 
-void print(const char* prompt) {
-    printf("%s\n", prompt);
+void print(const char* prompt, const char* flags) {
+    if (strstr(flags, "e") != NULL) { } // TODO implement
+    if (strstr(flags, "n") != NULL) {
+        printf("%s", prompt);
+    } else {
+        printf("%s\n", prompt);
+    }
 }
 
 void interpret(char* cwd, char* prompt) {
@@ -69,8 +73,15 @@ void interpret(char* cwd, char* prompt) {
     } else if (strstr(command, "pwd") == command) {
         printWorkingDirectory(cwd);
     } else if (strstr(command, "echo") == command) {
-        // TODO flags
-        print(prompt);
+        char flags[FLAG_AMOUNT + 1] = "--\0";
+        unsigned long currentFlag = 0;
+        while (prompt != NULL && strstr(prompt, "-") == prompt && currentFlag < FLAG_AMOUNT) {
+            char* flag = strsep(&prompt, " ");
+            removeAllOccurences(flag, '-');
+            strcpy(&flags[currentFlag], flag);
+            currentFlag += strlen(flag);
+        }
+        print(prompt, flags);
     } else if (strstr(command, "exit") == command) {
         // handled in interface()
     } else {
