@@ -137,6 +137,26 @@ static void init_event(log_Event *ev, void *udata) {
 }
 
 
+void vlog_log(log_Event ev) {
+  lock();
+
+  if (!L.quiet && ev.level >= L.level) {
+    init_event(&ev, stderr);
+    stdout_callback(&ev);
+  }
+
+  for (int i = 0; i < MAX_CALLBACKS && L.callbacks[i].fn; i++) {
+    Callback *cb = &L.callbacks[i];
+    if (ev.level >= cb->level) {
+      init_event(&ev, cb->udata);
+      cb->fn(&ev);
+    }
+  }
+
+  unlock();
+}
+
+
 void log_log(int level, const char *file, int line, const char *fmt, ...) {
   log_Event ev = {
     .fmt   = fmt,
@@ -144,25 +164,7 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
     .line  = line,
     .level = level,
   };
-
-  lock();
-
-  if (!L.quiet && level >= L.level) {
-    init_event(&ev, stderr);
-    va_start(ev.ap, fmt);
-    stdout_callback(&ev);
-    va_end(ev.ap);
-  }
-
-  for (int i = 0; i < MAX_CALLBACKS && L.callbacks[i].fn; i++) {
-    Callback *cb = &L.callbacks[i];
-    if (level >= cb->level) {
-      init_event(&ev, cb->udata);
-      va_start(ev.ap, fmt);
-      cb->fn(&ev);
-      va_end(ev.ap);
-    }
-  }
-
-  unlock();
+  va_start(ev.ap, fmt);
+  vlog_log(ev);
+  va_end(ev.ap);
 }
