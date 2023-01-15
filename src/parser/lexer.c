@@ -964,7 +964,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 24 "lexer.l"
-{ return OP_EXPR_END; }
+{ continue; /* return OP_EXPR_END; */ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP

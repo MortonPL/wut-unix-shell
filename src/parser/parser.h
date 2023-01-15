@@ -66,8 +66,7 @@ extern int yydebug;
     WHITESPACES = 261,             /* WHITESPACES  */
     OP_PIPE = 262,                 /* OP_PIPE  */
     OP_PULL = 263,                 /* OP_PULL  */
-    OP_PUSH = 264,                 /* OP_PUSH  */
-    OP_EXPR_END = 265              /* OP_EXPR_END  */
+    OP_PUSH = 264                  /* OP_PUSH  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -84,7 +83,7 @@ union YYSTYPE
     CommandExpression *command;
     CommandElement *element;
 
-#line 88 "parser.h"
+#line 87 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

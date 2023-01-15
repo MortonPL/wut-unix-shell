@@ -39,26 +39,29 @@
 
 %left       OP_PIPE
 %precedence OP_PULL OP_PUSH
-%precedence OP_EXPR_END
+/* %precedence OP_EXPR_END */
 
-/* %type<pipe>    pipe_expression
+%type<pipe>    pipe_expression
 %type<command> command
 %type<element> argument_or_redirection
-%type<text>    string */
+%type<element> redirection
+%type<element> string
 
 
 /* GRAMMAR RULES */
 
 %%
 
-expressions:
+/* expressions:
   pipe_expression
 | expressions OP_EXPR_END whitespaces.opt pipe_expression.opt
-;
+; */
 
 pipe_expression:
   command whitespaces.opt
+    { $$ = CreatePipeExpression(NULL, $1); }
 | pipe_expression OP_PIPE whitespaces.opt command
+    { $$ = CreatePipeExpression($1, $4); }
 ;
 
 pipe_expression.opt:
@@ -68,8 +71,11 @@ pipe_expression.opt:
 
 command:
   argument_or_redirection
+    { $$ = CreateCommandExpression($1); }
 | command WHITESPACES argument_or_redirection
+    { $$ = $1; AppendToCommandExpression($$, $3); }
 | command redirection
+    { $$ = $1; AppendToCommandExpression($$, $2); }
 ;
 
 argument_or_redirection:
@@ -79,22 +85,24 @@ argument_or_redirection:
 
 redirection:
   OP_PULL whitespaces.opt string
+    { $$ = ConvertToRedirection(false, $3); }
 | OP_PUSH whitespaces.opt string
+    { $$ = ConvertToRedirection(true, $3); }
 ;
 
 string:
-  string_part string_part.rep
-;
-
-string_part.rep:
-  %empty
-| string_part string_part.rep
-;
-
-string_part:
   STRING_PART
+    { $$ = CreateWord($1); }
 | VARIABLE_READ
+    { $$ = CreateWord($1); }
 | VARIABLE_WRITE
+    { $$ = CreateAssignment($1); }
+| string STRING_PART
+    { $$ = $1; AppendToCommandElement($$, $2); }
+| string VARIABLE_READ
+    { $$ = $1; AppendToCommandElement($$, $2); }
+| string VARIABLE_WRITE
+    { $$ = $1; AppendToCommandElement($$, $2); }
 ;
 
 whitespaces.opt:
