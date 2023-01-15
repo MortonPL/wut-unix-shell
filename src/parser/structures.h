@@ -17,9 +17,7 @@ typedef struct {
 } CommandElement;
 
 typedef struct {
-    CommandElement *Assignments;
-    CommandElement *Arguments;
-    CommandElement *Redirections;
+    CommandElement **Elements;
 } CommandExpression;
 
 typedef struct PipeExpression {
@@ -28,13 +26,16 @@ typedef struct PipeExpression {
 } PipeExpression;
 
 PipeExpression *CreatePipeExpression(PipeExpression *pLeft, CommandExpression *pRight);
-CommandExpression *CreateCommandExpression(CommandElement *pAssignments, CommandElement *pArguments, CommandElement *pRedirections);
+CommandExpression *CreateCommandExpression(CommandElement *pFirst);
 
-CommandElement *CreateAssignment(char *pName, char *pValue);
-CommandElement *CreateWord(char *pValue);
-CommandElement *CreateRedirection(bool isOut, char *pValue);
+CommandElement *CreateAssignment(const char *pFirst);  // copies pFirst
+CommandElement *CreateWord(const char *pFirst);  // copies pFirst
+CommandElement *ConvertToRedirection(bool isOut, CommandElement *pBase);  // frees pBase if pBase->Type == ASSIGNMENT, copies pointers otherwise
 
 void DeletePipeExpression(PipeExpression *pExpression);
 void DeleteCommandExpression(CommandExpression *pExpression);
 
 void DeleteCommandElement(CommandElement *pElement);
+
+bool AppendToCommandElement(CommandElement *pElements, const char *pString);  // copies pString
+bool AppendToCommandExpression(CommandExpression *pExpression, CommandElement *pElement);

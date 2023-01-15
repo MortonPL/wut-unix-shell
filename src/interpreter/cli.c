@@ -7,9 +7,11 @@ int CHILD_PID = -1;
 
 void handleInput(char* cwd, char* command) {
     printf("command: %s \n", command);
-    PipeExpression *expression = GetTree(command);
-    DeletePipeExpression(expression);
-    printf("parsed\n");
+
+    PipeExpression *pResult = GetTree(command);
+    fprintf(stderr, "parsed\n");
+    PrintPipeExpression(pResult, 0);
+    DeletePipeExpression(pResult);
 
     removeAllOccurences(command, '\n');
     // TODO use parser
