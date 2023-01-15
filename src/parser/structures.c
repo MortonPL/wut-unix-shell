@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "structures.h"
 
 PipeExpression *CreatePipeExpression(PipeExpression *pLeft, CommandExpression *pRight)
@@ -12,7 +13,7 @@ PipeExpression *CreatePipeExpression(PipeExpression *pLeft, CommandExpression *p
     return pExpression;
 }
 
-CommandExpression *CreateCommandExpression(AssignmentExpression **pAssignments, char **pArguments, char *pInRedir, char *pOutRedir)
+CommandExpression *CreateCommandExpression(CommandElement *pAssignments, CommandElement *pArguments, CommandElement *pRedirections)
 {
     CommandExpression *pExpression = (CommandExpression *)malloc(sizeof(CommandExpression));
     if (pExpression == NULL)
@@ -20,20 +21,50 @@ CommandExpression *CreateCommandExpression(AssignmentExpression **pAssignments, 
 
     pExpression->Assignments = pAssignments;
     pExpression->Arguments = pArguments;
-    pExpression->InRedir = pInRedir;
-    pExpression->OutRedir = pOutRedir;
+    pExpression->Redirections = pRedirections;
     return pExpression;
 }
 
-AssignmentExpression *CreateAssignmentExpression(char *pName, char *pValue)
+static CommandElement *createCommandElement(CommandElementType type)
 {
-    AssignmentExpression *pExpression = (AssignmentExpression *)malloc(sizeof(AssignmentExpression));
-    if (pExpression == NULL)
+    CommandElement *pElement = (CommandElement *)malloc(sizeof(CommandElement));
+    if (pElement == NULL)
         return NULL;
 
-    pExpression->Name = pName;
-    pExpression->Value = pValue;
-    return pExpression;
+    CommandElement typedElement = { type, NULL, NULL };
+    memcpy_s(pElement, &typedElement, sizeof(CommandElement));
+    return pElement;
+}
+
+CommandElement *CreateAssignment(char *pName, char *pValue)
+{
+    CommandElement *pElement = createCommandElement(CE_ASSIGNMENT);
+    if (pElement == NULL)
+        return NULL;
+
+    pElement->Value = pValue;
+    pElement->Name = pName;
+    return pElement;
+}
+
+CommandElement *CreateWord(char *pValue)
+{
+    CommandElement *pElement = createCommandElement(CE_WORD);
+    if (pElement == NULL)
+        return NULL;
+
+    pElement->Value = pValue;
+    return pElement;
+}
+
+CommandElement *CreateRedirection(bool isOut, char *pValue)
+{
+    CommandElement *pElement = createCommandElement(isOut ? CE_REDIRECTION_OUT : CE_REDIRECTION_IN);
+    if (pElement == NULL)
+        return NULL;
+
+    pElement->Value = pValue;
+    return pElement;
 }
 
 void DeletePipeExpression(PipeExpression *pExpression)
@@ -47,49 +78,26 @@ void DeletePipeExpression(PipeExpression *pExpression)
     free(pExpression);
 }
 
-static void deleteAssignmentExpressions(AssignmentExpression **pAssignments)
-{
-    if (pAssignments == NULL)
-        return;
-
-    AssignmentExpression *ptr = *pAssignments;
-    while (ptr != NULL)
-        DeleteAssignmentExpression(ptr++);
-    free(pAssignments);
-}
-
-static void deleteArguments(char **pArguments)
-{
-    if (pArguments == NULL)
-        return;
-
-    char *ptr = *pArguments;
-    while (ptr != NULL)
-        free(ptr++);
-    free(pArguments);
-}
-
 void DeleteCommandExpression(CommandExpression *pExpression)
 {
     if (pExpression == NULL)
         return;
 
-    deleteAssignmentExpressions(pExpression->Assignments);
-    deleteArguments(pExpression->Arguments);
-    free(pExpression->InRedir);
-    free(pExpression->OutRedir);
+    DeleteCommandElement(pExpression->Assignments);
+    DeleteCommandElement(pExpression->Arguments);
+    DeleteCommandElement(pExpression->Redirections);
 
     free(pExpression);
 }
 
-void DeleteAssignmentExpression(AssignmentExpression *pExpression)
+void DeleteCommandElement(CommandElement *pElement)
 {
-    if (pExpression == NULL)
+    if (pElement == NULL)
         return;
 
-    free(pExpression->Name);
-    free(pExpression->Value);
+    free(pElement->Name);
+    free(pElement->Value);
 
-    free(pExpression);
+    free(pElement);
 }
 
