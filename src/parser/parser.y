@@ -24,7 +24,9 @@
 %union {
     int value;
     char *text;
-    PipeExpression *expression;
+    PipeExpression *pipe;
+    CommandExpression *command;
+    CommandElement *element;
 }
 
 
@@ -39,60 +41,40 @@
 %precedence OP_PULL OP_PUSH
 %precedence OP_EXPR_END
 
+/* %type<pipe>    pipe_expression
+%type<command> command
+%type<element> argument_or_redirection
+%type<text>    string */
+
 
 /* GRAMMAR RULES */
 
 %%
 
 expressions:
-  expression expressions.trail.rep
-;
-
-expressions.opt:
-  %empty
-| expression expressions.trail.rep
-;
-
-expressions.trail.rep:
-  %empty
-| OP_EXPR_END whitespaces.opt expressions.opt
-;
-
-expression:
   pipe_expression
+| expressions OP_EXPR_END whitespaces.opt pipe_expression.opt
 ;
 
 pipe_expression:
-  command pipe_expression.trail.rep
+  command whitespaces.opt
+| pipe_expression OP_PIPE whitespaces.opt command
 ;
 
-pipe_expression.trail.rep:
+pipe_expression.opt:
   %empty
-| OP_PIPE whitespaces.opt command pipe_expression.trail.rep
+| pipe_expression
 ;
 
 command:
-  argument_or_redirection argument_or_redirection.trail.rep
-;
-
-argument_or_redirection.trail.rep:
-  %empty
-| WHITESPACES argument_or_redirection.opt
-| redirection argument_or_redirection.trail.rep
-;
-
-argument_or_redirection.opt:
-  %empty
-| argument_or_redirection argument_or_redirection.trail.rep
+  argument_or_redirection
+| command WHITESPACES argument_or_redirection
+| command redirection
 ;
 
 argument_or_redirection:
-  assignment_or_argument
-| redirection
-;
-
-assignment_or_argument:
   string
+| redirection
 ;
 
 redirection:
