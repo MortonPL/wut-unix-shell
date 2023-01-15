@@ -520,8 +520,8 @@ static const flex_int16_t yy_chk[51] =
 
 static const flex_int16_t yy_rule_linenum[14] =
     {   0,
-       23,   24,   25,   26,   28,   31,   35,   38,   41,   44,
-       47,   48,   49
+       24,   25,   26,   27,   29,   31,   34,   36,   38,   40,
+       42,   43,   44
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -535,13 +535,14 @@ static const flex_int16_t yy_rule_linenum[14] =
 /* PROLOGUE */
 #line 4 "lexer.l"
     #include <stdio.h>
+    #include "structures.h"
     #include "parser.h"
-#line 540 "lexer.c"
+#line 541 "lexer.c"
 #define YY_NO_INPUT 1
 #define YY_NO_UNISTD_H 1
 /* DECLARATIONS */
 /* LEXICAL RULES */
-#line 545 "lexer.c"
+#line 546 "lexer.c"
 
 #define INITIAL 0
 
@@ -881,10 +882,10 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 21 "lexer.l"
+#line 22 "lexer.l"
 
 
-#line 888 "lexer.c"
+#line 889 "lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -962,29 +963,28 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 23 "lexer.l"
-{ fputs(";\n", stderr); return OP_EXPR_END; }
+#line 24 "lexer.l"
+{ return OP_EXPR_END; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 24 "lexer.l"
-{ fputs("|\n", stderr); return OP_PIPE; }
+#line 25 "lexer.l"
+{ return OP_PIPE; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 25 "lexer.l"
-{ fputs("<\n", stderr); return OP_PULL; }
+#line 26 "lexer.l"
+{ return OP_PULL; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 26 "lexer.l"
-{ fputs(">\n", stderr); return OP_PUSH; }
+#line 27 "lexer.l"
+{ return OP_PUSH; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 28 "lexer.l"
+#line 29 "lexer.l"
 { yylval->text = yytext;
-                                    fprintf(stderr, "VARIABLE_WRITE: %s\n", yylval->text);
                                     return VARIABLE_WRITE; }
 	YY_BREAK
 case 6:
@@ -992,59 +992,54 @@ YY_RULE_SETUP
 #line 31 "lexer.l"
 { yytext[strlen(yytext) - 1] = '\0';
                                     yylval->text = yytext + 1;
-                                    fprintf(stderr, "STRING_PART1: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 35 "lexer.l"
+#line 34 "lexer.l"
 { yylval->text = yytext + 1;
-                                    fprintf(stderr, "STRING_PART2: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 38 "lexer.l"
+#line 36 "lexer.l"
 { yylval->text = yytext;
-                                    fprintf(stderr, "STRING_PART3: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 41 "lexer.l"
+#line 38 "lexer.l"
 { yylval->text = yytext;
-                                    fprintf(stderr, "STRING_PART4: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 44 "lexer.l"
+#line 40 "lexer.l"
 { yylval->text = yytext + 1;
-                                    fprintf(stderr, "VARIABLE_READ: %s\n", yylval->text);
                                     return VARIABLE_READ; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 47 "lexer.l"
-{ fputs("WHITESPACES\n", stderr); return WHITESPACES; }
+#line 42 "lexer.l"
+{ return WHITESPACES; }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 48 "lexer.l"
-{ fputs("\\n\n", stderr); continue; }
+#line 43 "lexer.l"
+{ continue; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 49 "lexer.l"
-{ fputs("YYUNDEF\n", stderr); return YYUNDEF; }
+#line 44 "lexer.l"
+{ return YYUNDEF; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 51 "lexer.l"
+#line 46 "lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1048 "lexer.c"
+#line 1043 "lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2330,16 +2325,16 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* %ok-for-header */
 
-#line 51 "lexer.l"
+#line 46 "lexer.l"
 
 
 
 /* EPILOGUE */
 
-int yyerror(char **expression, yyscan_t scanner, const char *msg) {
-    fprintf(stderr, "Error: %s\n", msg);
-    fprintf(stderr, "\tparsing expression: %s\n", *expression);
-    (void)scanner;
+int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage) {
+    fprintf(stderr, "Error: %s\n", pMessage);
+    (void)pExpression;
+    (void)pScanner;
     return 0;
 }
 

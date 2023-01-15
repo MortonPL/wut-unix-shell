@@ -55,7 +55,12 @@
 			}
 		],
 		"files.associations": {
-			"mmem.h": "c"
+			"*.y": "yacc",
+			"mmem.h": "c",
+			"stdio.h": "c",
+			"interface.h": "c",
+			"parser.h": "c",
+			"lexer.h": "c"
 		},
 	},
 }

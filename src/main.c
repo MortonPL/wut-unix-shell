@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "lib/mmem.h"
-#include "parser/tree.h"
+#include "parser/interface.h"
 #include "pipes/pipes.h"
 
 typedef int (*helloer)(const char* msg, ...);
@@ -141,8 +141,8 @@ int main()
     {
         if (strlen(buffer) == 0)
             continue;
-        const char *result = GetTree(buffer);
-        (void)result;
+        PipeExpression *pResult = GetTree(buffer);
+        DeletePipeExpression(pResult);
         printf("parsed\n");
     }
 

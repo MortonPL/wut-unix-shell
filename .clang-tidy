@@ -28,17 +28,31 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.MemberCase
     value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
   - key: readability-identifier-naming.LocalPointerCase
     value: CamelCase
   - key: readability-identifier-naming.LocalPointerPrefix
     value: p
   - key: readability-identifier-naming.LocalPointerIgnoredRegexp
     value: \w{1,3}
+  - key: readability-identifier-naming.LocalConstantPointerCase
+    value: CamelCase
+  - key: readability-identifier-naming.LocalConstantPointerPrefix
+    value: p
+  - key: readability-identifier-naming.LocalConstantPointerIgnoredRegexp
+    value: \w{1,3}
   - key: readability-identifier-naming.GlobalPointerCase
     value: CamelCase
   - key: readability-identifier-naming.GlobalPointerPrefix
     value: p
   - key: readability-identifier-naming.GlobalPointerIgnoredRegexp
+    value: \w{1,3}
+  - key: readability-identifier-naming.GlobalConstantPointerCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPointerPrefix
+    value: p
+  - key: readability-identifier-naming.GlobalConstantPointerIgnoredRegexp
     value: \w{1,3}
   - key: readability-identifier-naming.ParameterCase
     value: camelBack

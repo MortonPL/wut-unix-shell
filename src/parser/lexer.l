@@ -2,6 +2,7 @@
 
 %{
     #include <stdio.h>
+    #include "structures.h"
     #include "parser.h"
 %}
 
@@ -47,9 +48,9 @@
 
 /* EPILOGUE */
 
-int yyerror(char **expression, yyscan_t scanner, const char *msg) {
-    fprintf(stderr, "Error: %s\n", msg);
-    fprintf(stderr, "\tparsing expression: %s\n", *expression);
-    (void)scanner;
+int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage) {
+    fprintf(stderr, "Error: %s\n", pMessage);
+    (void)pExpression;
+    (void)pScanner;
     return 0;
 }

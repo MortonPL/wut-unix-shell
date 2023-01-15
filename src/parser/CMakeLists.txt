@@ -22,9 +22,10 @@ endif()
 
 # sources
 set(SRC_PARSER_FILES
+    interface.c
     lexer.c
     parser.c
-    tree.c
+    structures.c
 )
 
 # add the library version

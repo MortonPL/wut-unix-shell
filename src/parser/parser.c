@@ -69,13 +69,14 @@
 /* First part of user prologue.  */
 #line 3 "parser.y"
 
+  #include "structures.h"
   #include "parser.h"
   #include "lexer.h"
 
   // reference the implementation provided in lexer.l
-  int yyerror(const char **expression, yyscan_t scanner, const char *msg);
+  int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage);
 
-#line 79 "parser.c"
+#line 80 "parser.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -512,10 +513,10 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    46,    46,    50,    51,    55,    59,    63,    64,    68,
-      69,    73,    74,    75,    79,    80,    84,    85,    89,    93,
-      94,    98,   102,   103,   107,   111,   112,   116,   117,   121,
-     122
+       0,    48,    48,    52,    53,    57,    61,    65,    66,    70,
+      71,    75,    76,    77,    81,    82,    86,    87,    91,    95,
+      96,   100,   104,   105,   109,   113,   114,   118,   119,   123,
+     124
 };
 #endif
 
@@ -679,7 +680,7 @@ enum { YYENOMEM = -2 };
       }                                                           \
     else                                                          \
       {                                                           \
-        yyerror (text, scanner, YY_("syntax error: cannot back up")); \
+        yyerror (pExpression, scanner, YY_("syntax error: cannot back up")); \
         YYERROR;                                                  \
       }                                                           \
   while (0)
@@ -715,7 +716,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Kind, Value, text, scanner); \
+                  Kind, Value, pExpression, scanner); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -727,11 +728,11 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, const char **text, yyscan_t scanner)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, PipeExpression **pExpression, yyscan_t scanner)
 {
   FILE *yyoutput = yyo;
   YY_USE (yyoutput);
-  YY_USE (text);
+  YY_USE (pExpression);
   YY_USE (scanner);
   if (!yyvaluep)
     return;
@@ -751,12 +752,12 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, const char **text, yyscan_t scanner)
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, PipeExpression **pExpression, yyscan_t scanner)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yykind, yyvaluep, text, scanner);
+  yy_symbol_value_print (yyo, yykind, yyvaluep, pExpression, scanner);
   YYFPRINTF (yyo, ")");
 }
 
@@ -790,7 +791,7 @@ do {                                                            \
 
 static void
 yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
-                 int yyrule, const char **text, yyscan_t scanner)
+                 int yyrule, PipeExpression **pExpression, yyscan_t scanner)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -803,7 +804,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
                        YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
-                       &yyvsp[(yyi + 1) - (yynrhs)], text, scanner);
+                       &yyvsp[(yyi + 1) - (yynrhs)], pExpression, scanner);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -811,7 +812,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, text, scanner); \
+    yy_reduce_print (yyssp, yyvsp, Rule, pExpression, scanner); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -852,10 +853,10 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, const char **text, yyscan_t scanner)
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, PipeExpression **pExpression, yyscan_t scanner)
 {
   YY_USE (yyvaluep);
-  YY_USE (text);
+  YY_USE (pExpression);
   YY_USE (scanner);
   if (!yymsg)
     yymsg = "Deleting";
@@ -876,7 +877,7 @@ yydestruct (const char *yymsg,
 `----------*/
 
 int
-yyparse (const char **text, yyscan_t scanner)
+yyparse (PipeExpression **pExpression, yyscan_t scanner)
 {
 /* Lookahead token kind.  */
 int yychar;
@@ -1129,7 +1130,7 @@ yyreduce:
   switch (yyn)
     {
 
-#line 1133 "parser.c"
+#line 1134 "parser.c"
 
       default: break;
     }
@@ -1176,7 +1177,7 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-      yyerror (text, scanner, YY_("syntax error"));
+      yyerror (pExpression, scanner, YY_("syntax error"));
     }
 
   if (yyerrstatus == 3)
@@ -1193,7 +1194,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, text, scanner);
+                      yytoken, &yylval, pExpression, scanner);
           yychar = YYEMPTY;
         }
     }
@@ -1248,7 +1249,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  YY_ACCESSING_SYMBOL (yystate), yyvsp, text, scanner);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, pExpression, scanner);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1287,7 +1288,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (text, scanner, YY_("memory exhausted"));
+  yyerror (pExpression, scanner, YY_("memory exhausted"));
   yyresult = 2;
   goto yyreturn;
 #endif
@@ -1303,7 +1304,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, text, scanner);
+                  yytoken, &yylval, pExpression, scanner);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1312,7 +1313,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, text, scanner);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, pExpression, scanner);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1323,7 +1324,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 125 "parser.y"
+#line 127 "parser.y"
 
 
 
