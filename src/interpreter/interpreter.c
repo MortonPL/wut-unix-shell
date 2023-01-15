@@ -29,6 +29,9 @@ void changeDirectory(char* cwd, const char* path) {
             strcat(cwd, path);
         }
     }
+    if (chdir(cwd) < 0) {
+        exit(EXIT_FAILURE);
+    }
 }
 
 void printWorkingDirectory(const char* cwd) {
@@ -61,6 +64,7 @@ void interpret(char* cwd, char* prompt) {
     } else if (strstr(command, "pwd") == command) {
         printWorkingDirectory(cwd);
     } else if (strstr(command, "echo") == command) {
+        // TODO handle variables
         char flags[FLAG_AMOUNT + 1] = "--\0";
         if (prompt != NULL)
             getFlags(flags, &prompt);
@@ -68,16 +72,16 @@ void interpret(char* cwd, char* prompt) {
     } else if (strstr(command, "exit") == command) {
         // handled in interface()
     } else {
-        char shPrompt[COMMAND_SIZE];
-        shPrompt[0] = '\0';
-        strcat(shPrompt, "cd ");
-        strcat(shPrompt, cwd);
-        strcat(shPrompt, "; ");
-        strcat(shPrompt, command);
-        if (prompt != NULL) {
-            strcat(shPrompt, " ");
-            strcat(shPrompt, prompt);
+        // TODO handle pipes and redirects
+        char* path = getenv("PATH");
+        char pathenv[strlen(path) + sizeof("PATH=")];
+        char* envp[] = {pathenv, NULL};
+        char* args[] = {command, prompt, NULL};
+
+        int pid = attach_command(STDIN_FILENO, STDOUT_FILENO, NULL, command, args, envp);
+        if (pid < 0) {
+            exit(pid);
         }
-        system(shPrompt);
+        wait_for_child(pid);
     }
 }

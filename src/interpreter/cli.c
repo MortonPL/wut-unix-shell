@@ -18,7 +18,9 @@ void interface(const int isBatch, const char** argumentsValues) {
     MemContext context = MakeContext();
     char* cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
-    strcpy(cwd, "~");
+    if (getcwd(cwd, COMMAND_SIZE) == NULL) {
+        exit(EXIT_FAILURE);
+    }
 
     if (isBatch) {
         FILE* input = fmemopen(argumentsValues[isBatch], strlen(argumentsValues[isBatch]), "r");

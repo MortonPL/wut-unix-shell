@@ -1,7 +1,9 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "../lib/strpls.h"
+#include "../pipes/pipes.h"
 
 void changeDirectory(char* cwd, const char* path);
 

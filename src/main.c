@@ -2,7 +2,6 @@
 #include "lib/logger.c"
 #include "lib/mmem.h"
 #include "interpreter/cli.h"
-#include "pipes/pipes.h"
 
 typedef int (*helloer)(const char* msg, ...);
 
