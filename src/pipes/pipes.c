@@ -15,8 +15,8 @@
 
 #define RETURN_ON_ERR(x, y) if (x < 0) return y
 
-extern const char* Temp = "/tmp";
-extern const char* DevNull = "/dev/null";
+const char* Temp = "/tmp";
+const char* DevNull = "/dev/null";
 
 int devnull_in() {
     return open(DevNull, O_WRONLY);
@@ -27,11 +27,11 @@ int devnull_out() {
 }
 
 int file_in(char* file) {
-    open(file, O_RDONLY);
+    return open(file, O_RDONLY);
 }
 
 int file_out(char* file) {
-    open(file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    return open(file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void generate_fifo_filename(char* path_buf) {
@@ -62,7 +62,7 @@ int wait_fd_ready(int fd) {
     struct pollfd pfd;
 
     pfd.fd = fd;
-    pfd.events |= POLLIN;
+    pfd.events = POLLIN;
 
     int poll_res = poll(&pfd, 1, -1);
     RETURN_ON_ERR(poll_res, -1);
@@ -70,6 +70,29 @@ int wait_fd_ready(int fd) {
     if (!(pfd.revents & (POLLIN | POLLHUP)))
         return -2;
 
+    return 0;
+}
+
+int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
+    int res;
+    // Overwrite standard pipes and close the provided ones if necessary
+    if (pipe_in != STDIN_FILENO) {
+        res = dup2(pipe_in, STDIN_FILENO);
+        RETURN_ON_ERR(res, -1);
+        res = close(pipe_in);
+        RETURN_ON_ERR(res, -2);
+    }
+    if (pipe_out != STDOUT_FILENO) {
+        res = dup2(pipe_out, STDOUT_FILENO);
+        RETURN_ON_ERR(res, -1);
+        res = close(pipe_out);
+        RETURN_ON_ERR(res, -2);
+    }
+    // Run internal or external command
+    res = (callback != NULL)
+        ? callback(file, argv, envp)
+        : execvpe(file, argv, envp);
+    RETURN_ON_ERR(res, -3);
     return 0;
 }
 
@@ -101,29 +124,6 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
         RETURN_ON_ERR(res, -3);
     }
     return fork_res;
-}
-
-int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
-    int res;
-    // Overwrite standard pipes and close the provided ones if necessary
-    if (pipe_in != STDIN_FILENO) {
-        res = dup2(pipe_in, STDIN_FILENO);
-        RETURN_ON_ERR(res, -1);
-        res = close(pipe_in);
-        RETURN_ON_ERR(res, -2);
-    }
-    if (pipe_out != STDOUT_FILENO) {
-        res = dup2(pipe_out, STDOUT_FILENO);
-        RETURN_ON_ERR(res, -1);
-        res = close(pipe_out);
-        RETURN_ON_ERR(res, -2);
-    }
-    // Run internal or external command
-    res = (callback != NULL)
-        ? callback(file, argv, envp)
-        : execvpe(file, argv, envp);
-    RETURN_ON_ERR(res, -3);
-    return 0;
 }
 
 int wait_for_child(pid_t pid) {

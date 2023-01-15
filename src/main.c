@@ -36,7 +36,7 @@ void superprint(helloer fun)
     // won't leak!
 }
 
-void print_content(char** content) {
+void print_content(char *const *content) {
     if (content != NULL) {
         char *subcontent = content[0];
         for (int i = 1; subcontent != NULL; i++) {
@@ -48,15 +48,19 @@ void print_content(char** content) {
 
 void move_in_to_out() {
     char buf[512];
-    int bytes_read;
-    while ((bytes_read = read(STDIN_FILENO, buf, sizeof buf)) > 0)
-        write(STDOUT_FILENO, buf, bytes_read);
+    ssize_t bytes_read, bytes_wrote;
+    while ((bytes_read = read(STDIN_FILENO, buf, sizeof buf)) > 0) {
+        bytes_wrote = write(STDOUT_FILENO, buf, (size_t) bytes_read);
+        while (bytes_wrote < bytes_read)
+            bytes_wrote += write(STDOUT_FILENO, &buf[bytes_wrote], (size_t) (bytes_read - bytes_wrote));
+    }
 }
 
 int dump_info_command(const char *file, char *const *argv, char *const *envp) {
     printf("%s\n", file);
     print_content(argv);
     print_content(envp);
+    fflush(stdout);
     move_in_to_out();
     return 0;
 }
@@ -64,12 +68,18 @@ int dump_info_command(const char *file, char *const *argv, char *const *envp) {
 int delayed_write_command(const char *file, char *const *argv, char *const *envp) {
     sleep(3);
     printf("Delayed message.\n");
+    (void)file;
+    (void)argv;
+    (void)envp;
     return 0;
 }
 
 int delayed_close_command(const char *file, char *const *argv, char *const *envp) {
     sleep(3);
     close(STDOUT_FILENO);
+    (void)file;
+    (void)argv;
+    (void)envp;
     return 0;
 }
 
