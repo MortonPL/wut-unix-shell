@@ -80,9 +80,11 @@ union YYSTYPE
 
     int value;
     char *text;
-    PipeExpression *expression;
+    PipeExpression *pipe;
+    CommandExpression *command;
+    CommandElement *element;
 
-#line 86 "parser.h"
+#line 88 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

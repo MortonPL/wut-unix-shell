@@ -32,7 +32,7 @@ static CommandElement *createCommandElement(CommandElementType type)
         return NULL;
 
     CommandElement typedElement = { type, NULL, NULL };
-    memcpy_s(pElement, &typedElement, sizeof(CommandElement));
+    memcpy(pElement, &typedElement, sizeof(CommandElement));
     return pElement;
 }
 
