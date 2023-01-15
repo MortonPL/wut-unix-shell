@@ -9,8 +9,15 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <time.h>
+#include <string.h>
 
 typedef int (*helloer)(const char* msg, ...);
+
+#ifdef DEBUG
+const int Debug = 1;
+#else
+const int Debug = 0;
+#endif
 
 void closer(void* pFd)
 {
@@ -87,19 +94,38 @@ int delayed_close_command(const char *file, char *const *argv, char *const *envp
     return 0;
 }
 
-int init_logger() {
+int ensure_logs_folder_exists() {
     int res = mkdir("logs", S_IRWXU | S_IRWXG | S_IRWXO);
     if (res < 0)
         if (errno != EEXIST)
             return res;
-    
+    return 0;
+}
+
+void current_time_string(char* buffer) {
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
-    char log_file_path[] = "logs/xxxx-xx-xx_xx:xx:xx.txt";
-    strftime(&log_file_path[5], 20, "%Y-%m-%d %H:%M:%S", tm);
-    log_file_path[24] = '.';
+    strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", tm);
+}
+
+int init_logger() {
+    int res = ensure_logs_folder_exists();
+    if (res < 0)
+        return res;
+
+    char log_file_path[64] = "logs/";
+    current_time_string(&log_file_path[strlen(log_file_path)]);
+    int log_mode;
+    if (Debug) {
+        strcat(log_file_path, "-debug.txt");
+        log_mode = LOG_TRACE;
+    }
+    else {
+        strcat(log_file_path, "-release.txt");
+        log_mode = LOG_ERROR;
+    }
     FILE *log_file = fopen(log_file_path, "w");
-    log_add_fp(log_file, LOG_TRACE);
+    log_add_fp(log_file, log_mode);
     return 0;
 }
 
