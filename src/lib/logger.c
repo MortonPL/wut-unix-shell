@@ -69,13 +69,13 @@ int init_logger() {
     char log_file_path[64] = "logs/";
     current_time_string(&log_file_path[strlen(log_file_path)]);
     int log_mode;
-    #ifdef DEBUG
-        strcat(log_file_path, "-debug.txt");
-        log_mode = LOG_TRACE;
-    #else
-        strcat(log_file_path, "-release.txt");
-        log_mode = LOG_ERROR;
-    #endif
+#ifdef DEBUG
+    strcat(log_file_path, "-debug.txt");
+    log_mode = LOG_TRACE;
+#else
+    strcat(log_file_path, "-release.txt");
+    log_mode = LOG_ERROR;
+#endif
     FILE *log_file = fopen(log_file_path, "w");
     log_add_fp(log_file, log_mode);
     return 0;
