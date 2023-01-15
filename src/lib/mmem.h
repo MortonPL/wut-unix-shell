@@ -4,24 +4,33 @@
 typedef struct realMemContext* MemContext;
 typedef void (*destructor)(void*);
 
-/// @brief A globally accessible MemContext. Note that it is NOT implicitly updated when chaning scopes.
-MemContext GlobalMemContext;
+/// @brief A globally accessible MemContext. Note that it is NOT implicitly updated when changing scopes.
+extern MemContext GlobalMemContext;
 
 /// @brief Creates a new context to use locally. Context will be destroyed automatically on AutoExit when it exits its scope.
 /// @return New MemContext or NULL on failure.
 MemContext MakeContext();
 
-/// @brief Allocates new momory with `malloc()` of given size and returns a pointer.
+/// @brief Allocates new memory with `malloc()` of given size and returns a pointer.
 /// @param context Memory context.
 /// @param size Size (in bytes) of memory to allocate.
+/// @param pDestructor Callback to call when deallocating memory.
 /// @return Pointer to allocated memory or NULL on failure.
 void* AutoMalloc(MemContext context, size_t size, destructor pDestructor);
 
-/// @brief Allocates new momory with `calloc()` of given size and returns a pointer.
+/// @brief Allocates new memory with `calloc()` of given size and returns a pointer.
 /// @param context Memory context.
 /// @param size Size (in bytes) of memory to allocate.
+/// @param pDestructor Callback to call when deallocating memory.
 /// @return Pointer to allocated memory or NULL on failure.
 void* AutoCalloc(MemContext context, size_t size, destructor pDestructor);
+
+/// @brief Allocates passed data on the heap and returns a pointer.
+/// @param context Memory context.
+/// @param data Data to allocate.
+/// @param pDestructor Callback to call when deallocating memory.
+/// @return Pointer to allocated memory or NULL on failure.
+long* AutoInsert(MemContext context, long data, destructor pDestructor);
 
 /// @brief Extends lifetime of all objects in a context by one scope. You SHOULD call it when entering a new scope.
 /// @param context Memory context.

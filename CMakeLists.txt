@@ -25,8 +25,8 @@ if(NOT MSVC)
     endif()
 
     # Optimizations
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_options(-O2)
+    if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+        add_compile_options(-O2)
     endif()
     
     # extra flags
@@ -36,14 +36,16 @@ if(NOT MSVC)
     add_compile_options(-Wconversion)
     
     # enable Werror if possible
-    include(CheckCCompilerFlag)
-    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.10.0")
-        check_c_compiler_flag("-Werror" COMPILER_SUPPORT_WERROR)
-    else()
-        CHECK_C_COMPILER_FLAG("-Werror" COMPILER_SUPPORT_WERROR)
-    endif()
-    if(COMPILER_SUPPORT_WERROR)
-        add_compile_options(-Werror)   
+    if (CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+        include(CheckCCompilerFlag)
+        if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.10.0")
+            check_c_compiler_flag("-Werror" COMPILER_SUPPORT_WERROR)
+        else()
+            CHECK_C_COMPILER_FLAG("-Werror" COMPILER_SUPPORT_WERROR)
+        endif()
+        if(COMPILER_SUPPORT_WERROR)
+            add_compile_options(-Werror)   
+        endif()
     endif()
 endif()
 

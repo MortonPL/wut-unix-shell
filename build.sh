@@ -14,12 +14,12 @@ print_help() {
     echo "Usage: build.sh release|debug [TARGETS] [OPTIONS]...";
     echo "All options (except help) require a valid target (release|debug)!"
     echo "Targets (if none set, build all):";
-    echo "\tshell";
-    echo "\tshelltest";
+    echo "    shell";
+    echo "    shelltest";
     echo "Options:";
-    echo "\t-c, --configure                 \t Force (re)generate CMake configuration files";
-    echo "\t-h, --help                      \t Display this message";
-    echo "\t-t, --tests                     \t Run tests after build";
+    echo "    -c, --configure                      Force (re)generate CMake configuration files";
+    echo "    -h, --help                           Display this message";
+    echo "    -t, --tests                          Run tests after build";
 }
 
 parse_args() {
@@ -58,7 +58,7 @@ parse_args() {
         *)
             case "$parse_mode" in
             "r")
-                OTHER_USER="${!arg_num}";
+                ___UNUSED="${!arg_num}";
                 parse_mode="";
                 ;;
             *)
