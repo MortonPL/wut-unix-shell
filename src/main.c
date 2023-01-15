@@ -95,10 +95,10 @@ int init_logger() {
     
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
-    char s[] = "logs/xxxx-xx-xx_xx:xx:xx.txt";
-    strftime(&s[5], 20, "%Y-%m-%d %H:%M:%S", tm);
-    s[24] = '.';
-    FILE *log_file = fopen(s, "w");
+    char log_file_path[] = "logs/xxxx-xx-xx_xx:xx:xx.txt";
+    strftime(&log_file_path[5], 20, "%Y-%m-%d %H:%M:%S", tm);
+    log_file_path[24] = '.';
+    FILE *log_file = fopen(log_file_path, "w");
     log_add_fp(log_file, LOG_TRACE);
     return 0;
 }
