@@ -84,7 +84,30 @@ int delayed_close_command(const char *file, char *const *argv, char *const *envp
     return 0;
 }
 
-int main()
+int ParseArgs(int ac, char** av, int* isBatch)
+{
+    int i = 1;
+    while (i < ac)
+    {
+        if (strcmp(av[i], "-c") == 0)
+        {
+            if (++i < ac)
+            {
+                *isBatch = i;
+                return 0;
+            }
+            else
+            {
+                fprintf(stderr, "Missing command.\n");
+                return 1;
+            }
+        }
+        i++;
+    }
+    return 0;
+}
+
+int main(int ac, char** av)
 {
     // Basic info dump
     // char *args[] = {"Arg1", "Arg2", NULL};
@@ -130,14 +153,22 @@ int main()
     // int pipe_out = file_out("./merol.txt");
     // pid_t cmd = attach_command(pipe_in, pipe_out, dump_info_command, "Dump Info Command", NULL, NULL);
     // wait_for_child(cmd);
+    
+    int isBatch = 0;
+    if (ParseArgs(ac, av, &isBatch) != 0)
+        return 1;
 
     AutoEntry(GlobalMemContext);
     superprint(printf);
     AutoExit(GlobalMemContext);
 
+    FILE* input = stdin;
+    if (isBatch)
+        input = fmemopen(av[isBatch], strlen(av[isBatch]), "r");
+
     const int bufsize = 256;
     char buffer[bufsize];
-    while (fgets(buffer, bufsize, stdin) != NULL)
+    while (fgets(buffer, bufsize, input) != NULL)
     {
         if (strlen(buffer) == 0)
             continue;
