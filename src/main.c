@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "lib/mmem.h"
+#include "parser/parser.h"
 
 typedef int (*helloer)(const char* msg, ...);
 
@@ -27,6 +28,7 @@ void superprint(helloer fun)
     AutoMalloc(ctx, 100, free);
 
     int fd = *(int*)AutoInsert(ctx, open("/dev/zero", O_RDONLY), closer);
+    (void)fd;
 
     fun("Hello %s!\n", x);
     AutoExit(ctx);
@@ -39,5 +41,12 @@ int main()
     superprint(printf);
 
     AutoExit(GlobalMemContext);
+
+    while (1)
+    {
+        int res = Scan();
+        printf("%d\n", res);
+    }
+
     return 0;
 }

@@ -25,7 +25,7 @@ if(NOT MSVC)
     endif()
 
     # Optimizations
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
     add_compile_options(-O2)
     endif()
     
