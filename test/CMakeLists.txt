@@ -2,8 +2,8 @@ enable_testing()
 
 # sources
 set(TEST_FILES
-    example.c
     main.c
+    example.c
     strpls.c
 )
 

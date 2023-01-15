@@ -1,8 +1,6 @@
 ## Instalowanie pakietów ogólnodostępnych
 ```
-sudo apt-get install build-essential
-sudo apt-get install cmake
-sudo apt-get install flex
+sudo apt-get install build-essential cmake flex
 ```
 
 ## Budowanie projektu

@@ -7,7 +7,7 @@ char previousWorkingDirectory[COMMAND_SIZE] = "~";
 
 void getFlags(char* flags, char** prompt) {
     unsigned long currentFlag = 0;
-    while (prompt != NULL && strstr(*prompt, "-") == *prompt && currentFlag < FLAG_AMOUNT) {
+    while (*prompt != NULL && strstr(*prompt, "-") == *prompt && currentFlag < FLAG_AMOUNT) {
         char* flag = strsep(prompt, " ");
         removeAllOccurences(flag, '-');
         strcpy(&flags[currentFlag], flag);
@@ -41,15 +41,18 @@ void print(const char* prompt, const char* flags) {
         // TODO implement
     }
     if (strstr(flags, "n") != NULL) {
-        printf("%s", prompt);
+        if (prompt != NULL)
+            printf("%s", prompt);
     } else {
-        printf("%s\n", prompt);
+        if (prompt != NULL)
+            printf("%s\n", prompt);
+        else
+            printf("\n");
     }
 }
 
 void interpret(char* cwd, char* prompt) {
     // TODO add "export"
-    removeAllOccurences(prompt, '\n');
     char* command = strsep(&prompt, " ");
     if (strstr(command, "cd") == command) {
         if (prompt != NULL) {
@@ -59,7 +62,8 @@ void interpret(char* cwd, char* prompt) {
         printWorkingDirectory(cwd);
     } else if (strstr(command, "echo") == command) {
         char flags[FLAG_AMOUNT + 1] = "--\0";
-        getFlags(flags, &prompt);
+        if (prompt != NULL)
+            getFlags(flags, &prompt);
         print(prompt, flags);
     } else if (strstr(command, "exit") == command) {
         // handled in interface()

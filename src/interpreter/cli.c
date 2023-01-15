@@ -4,18 +4,24 @@
 #define FLAG_AMOUNT 2
 
 void interface(const int isBatch) {
-    // TODO handle isBatch
     MemContext context = MakeContext();
     char* cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     strcpy(cwd, "~");
 
-    while (strstr(command, "exit") != command) {
-        if (!isBatch) {
-            printf("> ");
+    if (isBatch) {
+        while (1) {
+            int res = Scan();
+            printf("%d\n", res);
         }
-        fgets(command, COMMAND_SIZE, stdin);
-        interpret(cwd, command);
+    } else {
+        while (strstr(command, "exit") != command) {
+            printf("> ");
+            fgets(command, COMMAND_SIZE, stdin);
+            removeAllOccurences(command, '\n');
+            // TODO use parser
+            interpret(cwd, command);
+        }
     }
     AutoExit(context);
 }

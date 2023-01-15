@@ -5,7 +5,6 @@
 #include <fcntl.h>
 #include "lib/mmem.h"
 #include "interpreter/cli.h"
-#include "parser/parser.h"
 #include "pipes/pipes.h"
 #include "log.c/src/log.h"
 #include <sys/stat.h>
@@ -192,12 +191,6 @@ int main(const int argumentsCount, char *argumentsValues[])
     }
     interface(isBatch);
     AutoExit(GlobalMemContext);
-
-    while (1)
-    {
-        int res = Scan();
-        printf("%d\n", res);
-    }
 
     return 0;
 }
