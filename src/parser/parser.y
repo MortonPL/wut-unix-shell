@@ -17,6 +17,7 @@
 %defines "parser.h"
 
 %define      api.pure
+%define      parse.error verbose
 %lex-param   { yyscan_t scanner }
 %parse-param { PipeExpression **pExpression }
 %parse-param { yyscan_t scanner }
@@ -52,10 +53,14 @@
 
 %%
 
-expressions:
-  pipe_expression
-    { *pExpression = $1; }
-| expressions OP_EXPR_END whitespaces.opt pipe_expression.opt
+top_expression:
+  whitespaces.opt pipe_expression top_expression.trail.opt
+    { *pExpression = $2; YYACCEPT; }
+;
+
+top_expression.trail.opt:
+  %empty
+|  OP_EXPR_END
 ;
 
 pipe_expression:
@@ -63,11 +68,6 @@ pipe_expression:
     { $$ = CreatePipeExpression(NULL, $1); }
 | pipe_expression OP_PIPE whitespaces.opt command
     { $$ = CreatePipeExpression($1, $4); }
-;
-
-pipe_expression.opt:
-  %empty
-| pipe_expression
 ;
 
 command:

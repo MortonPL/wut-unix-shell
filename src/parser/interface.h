@@ -2,7 +2,7 @@
 
 #include "structures.h"
 
-PipeExpression *GetTree(const char *pLine);
+void PrintTree(const char *pLine);
 
 void PrintPipeExpression(PipeExpression *pExpression, int indent);
 void PrintCommandExpression(CommandExpression *pExpression, int indent);

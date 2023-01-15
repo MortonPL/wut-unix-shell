@@ -6,7 +6,7 @@
 
 int yyparse(PipeExpression **pExpression, yyscan_t pScanner);
 
-PipeExpression *GetTree(const char *pLine)
+void PrintTree(const char *pLine)
 {
     PipeExpression *pExpression = NULL;
     yyscan_t pScanner;
@@ -14,21 +14,26 @@ PipeExpression *GetTree(const char *pLine)
 
     if (yylex_init(&pScanner)) {
         /* could not initialize */
-        return NULL;
+        return;
     }
 
     pState = yy_scan_string(pLine, pScanner);
 
-    if (yyparse(&pExpression, pScanner)) {
-        /* error parsing */
-        return NULL;
+    int result;
+    for (int i = 0; !(result = yyparse(&pExpression, pScanner)); i++) {
+        fprintf(stderr, "yyparse#%d returned %d\n", i, result);
+        PrintPipeExpression(pExpression, 0);
+        if (pExpression == NULL)
+            break;
+        DeletePipeExpression(pExpression);
+        pExpression = NULL;
     }
 
     yy_delete_buffer(pState, pScanner);
 
     yylex_destroy(pScanner);
-
-    return pExpression;
+    
+    return;
 }
 
 static void printIndents(int count)

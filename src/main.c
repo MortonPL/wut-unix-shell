@@ -172,10 +172,8 @@ int main(int ac, char** av)
     {
         if (strlen(buffer) == 0)
             continue;
-        PipeExpression *pResult = GetTree(buffer);
+        PrintTree(buffer);
         fprintf(stderr, "parsed\n");
-        PrintPipeExpression(pResult, 0);
-        DeletePipeExpression(pResult);
     }
 
     return 0;
