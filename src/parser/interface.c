@@ -8,7 +8,7 @@ int yyparse(PipeExpression **pExpression, yyscan_t pScanner);
 
 PipeExpression *GetTree(const char *pLine)
 {
-    PipeExpression *pExpression;
+    PipeExpression *pExpression = NULL;
     yyscan_t pScanner;
     YY_BUFFER_STATE pState;
 

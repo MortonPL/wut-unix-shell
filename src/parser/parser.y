@@ -13,11 +13,11 @@
   typedef void* yyscan_t;
 }
 
-%output "parser.c"
+%output  "parser.c"
 %defines "parser.h"
 
-%define api.pure
-%lex-param { yyscan_t scanner }
+%define      api.pure
+%lex-param   { yyscan_t scanner }
 %parse-param { PipeExpression **pExpression }
 %parse-param { yyscan_t scanner }
 
@@ -30,12 +30,12 @@
 
 /* DECLARATIONS */
 
-%token STRING_PART
-%token VARIABLE_READ
-%token WHITESPACES
-%token VARIABLE_WRITE
+%token<text> STRING_PART
+%token<text> VARIABLE_READ
+%token<text> VARIABLE_WRITE
+%token       WHITESPACES
 
-%left OP_PIPE
+%left       OP_PIPE
 %precedence OP_PULL OP_PUSH
 %precedence OP_EXPR_END
 
@@ -48,9 +48,14 @@ expressions:
   expression expressions.trail.rep
 ;
 
+expressions.opt:
+  %empty
+| expression expressions.trail.rep
+;
+
 expressions.trail.rep:
   %empty
-| OP_EXPR_END expression expressions.trail.rep
+| OP_EXPR_END whitespaces.opt expressions.opt
 ;
 
 expression:
@@ -67,36 +72,26 @@ pipe_expression.trail.rep:
 ;
 
 command:
-  assignment assignments_or_arguments.trail.rep
-| argument assignments_or_arguments.trail.rep
+  argument_or_redirection argument_or_redirection.trail.rep
 ;
 
-assignments_or_arguments.trail.rep:
+argument_or_redirection.trail.rep:
   %empty
-| WHITESPACES assignments_or_arguments.opt
-| redirection assignments_or_arguments.trail.rep
+| WHITESPACES argument_or_redirection.opt
+| redirection argument_or_redirection.trail.rep
 ;
 
-assignments_or_arguments.opt:
+argument_or_redirection.opt:
   %empty
-| assignment_or_argument assignments_or_arguments.trail.rep
-;
-
-assignment_or_argument:
-  assignment
-| argument_or_redirection
-;
-
-assignment:
-  VARIABLE_WRITE string
+| argument_or_redirection argument_or_redirection.trail.rep
 ;
 
 argument_or_redirection:
-  argument
+  assignment_or_argument
 | redirection
 ;
 
-argument:
+assignment_or_argument:
   string
 ;
 
@@ -117,6 +112,7 @@ string_part.rep:
 string_part:
   STRING_PART
 | VARIABLE_READ
+| VARIABLE_WRITE
 ;
 
 whitespaces.opt:
