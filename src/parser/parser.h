@@ -62,8 +62,8 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     STRING_PART = 258,             /* STRING_PART  */
     VARIABLE_READ = 259,           /* VARIABLE_READ  */
-    WHITESPACES = 260,             /* WHITESPACES  */
-    VARIABLE_WRITE = 261,          /* VARIABLE_WRITE  */
+    VARIABLE_WRITE = 260,          /* VARIABLE_WRITE  */
+    WHITESPACES = 261,             /* WHITESPACES  */
     OP_PIPE = 262,                 /* OP_PIPE  */
     OP_PULL = 263,                 /* OP_PULL  */
     OP_PUSH = 264,                 /* OP_PUSH  */

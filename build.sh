@@ -33,7 +33,7 @@ parse_args() {
         case "${!arg_num}" in
         "-h" | "--help")
             print_help;
-            exit;
+            exit 0;
             ;;
         "-c" | "--configure")
             CONFIGURE=1;
@@ -75,8 +75,8 @@ parse_args() {
         arg_num=$(($arg_num + 1));
     done
     if [ "$parse_mode" != "" ]; then
-        echo "Invalid arguments. One or more options are missing values.";
-        exit;
+        echo "Invalid arguments. One or more options are missing values." >&2;
+        exit 4;
     fi
 }
 
@@ -99,8 +99,8 @@ do_build() {
     if [ $rc -eq 0 ]; then
         echo "Build finished.";
     else
-        echo "Build failed!!!";
-        exit;
+        echo "Build failed!!!" >&2;
+        exit 3;
     fi
 }
 
@@ -114,8 +114,8 @@ do_tests() {
         if [ $rc -eq 0 ]; then
             echo "Tests finished.";
         else
-            echo "Tests failed!!!";
-            exit;
+            echo "Tests failed!!!" >&2;
+            exit 2;
         fi
     else
         echo "Ignoring tests.";
@@ -125,7 +125,7 @@ do_tests() {
 # MAIN BODY STARTS HERE
 parse_args $@;
 if [ "$BUILD_TYPE" == "" ]; then
-    echo "Build type not specified, exiting. Use --help for help.";
+    echo "Build type not specified, exiting. Use --help for help." >&2;
     exit 1;
 fi
 
