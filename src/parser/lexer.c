@@ -520,8 +520,8 @@ static const flex_int16_t yy_chk[51] =
 
 static const flex_int16_t yy_rule_linenum[14] =
     {   0,
-       23,   24,   25,   26,   28,   31,   35,   38,   41,   44,
-       47,   48,   49
+       23,   24,   25,   26,   28,   30,   33,   35,   37,   39,
+       41,   42,   43
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -963,88 +963,82 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 23 "lexer.l"
-{ fputs(";\n", stderr); return OP_EXPR_END; }
+{ return OP_EXPR_END; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 24 "lexer.l"
-{ fputs("|\n", stderr); return OP_PIPE; }
+{ return OP_PIPE; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 25 "lexer.l"
-{ fputs("<\n", stderr); return OP_PULL; }
+{ return OP_PULL; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 26 "lexer.l"
-{ fputs(">\n", stderr); return OP_PUSH; }
+{ return OP_PUSH; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 28 "lexer.l"
 { yylval->text = yytext;
-                                    fprintf(stderr, "VARIABLE_WRITE: %s\n", yylval->text);
                                     return VARIABLE_WRITE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 31 "lexer.l"
+#line 30 "lexer.l"
 { yytext[strlen(yytext) - 1] = '\0';
                                     yylval->text = yytext + 1;
-                                    fprintf(stderr, "STRING_PART1: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 35 "lexer.l"
+#line 33 "lexer.l"
 { yylval->text = yytext + 1;
-                                    fprintf(stderr, "STRING_PART2: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 38 "lexer.l"
+#line 35 "lexer.l"
 { yylval->text = yytext;
-                                    fprintf(stderr, "STRING_PART3: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 41 "lexer.l"
+#line 37 "lexer.l"
 { yylval->text = yytext;
-                                    fprintf(stderr, "STRING_PART4: %s\n", yylval->text);
                                     return STRING_PART; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 44 "lexer.l"
+#line 39 "lexer.l"
 { yylval->text = yytext + 1;
-                                    fprintf(stderr, "VARIABLE_READ: %s\n", yylval->text);
                                     return VARIABLE_READ; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 47 "lexer.l"
-{ fputs("WHITESPACES\n", stderr); return WHITESPACES; }
+#line 41 "lexer.l"
+{ return WHITESPACES; }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 48 "lexer.l"
-{ fputs("\\n\n", stderr); continue; }
+#line 42 "lexer.l"
+{ continue; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 49 "lexer.l"
-{ fputs("YYUNDEF\n", stderr); return YYUNDEF; }
+#line 43 "lexer.l"
+{ return YYUNDEF; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 51 "lexer.l"
+#line 45 "lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1048 "lexer.c"
+#line 1042 "lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2330,7 +2324,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* %ok-for-header */
 
-#line 51 "lexer.l"
+#line 45 "lexer.l"
 
 
 
