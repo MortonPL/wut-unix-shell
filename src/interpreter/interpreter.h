@@ -11,4 +11,4 @@ void printWorkingDirectory(const char* cwd);
 
 void print(const char* prompt, const char* flags);
 
-void interpret(char* cwd, char* prompt);
+void interpret(char* cwd, char* prompt, int* childPid);

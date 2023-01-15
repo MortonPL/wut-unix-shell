@@ -3,6 +3,8 @@
 #define COMMAND_SIZE 256
 #define FLAG_AMOUNT 2
 
+int CHILD_PID = -1;
+
 void handleInput(char* cwd, char* command) {
     printf("command: %s \n", command);
     PipeExpression *expression = GetTree(command);
@@ -11,12 +13,11 @@ void handleInput(char* cwd, char* command) {
 
     removeAllOccurences(command, '\n');
     // TODO use parser
-    interpret(cwd, command);
+    interpret(cwd, command, &CHILD_PID);
 }
 
 void handleSignal(int signalNumber) {
-    // TODO do something
-    // TODO pass on to child process
+    kill(signalNumber, CHILD_PID);
 }
 
 void interface(const int isBatch, const char** argumentsValues) {

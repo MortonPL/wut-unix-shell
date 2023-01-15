@@ -54,7 +54,7 @@ void print(const char* prompt, const char* flags) {
     }
 }
 
-void interpret(char* cwd, char* prompt) {
+void interpret(char* cwd, char* prompt, int* childPid) {
     // TODO add "export"
     char* command = strsep(&prompt, " ");
     if (strstr(command, "cd") == command) {
@@ -64,7 +64,6 @@ void interpret(char* cwd, char* prompt) {
     } else if (strstr(command, "pwd") == command) {
         printWorkingDirectory(cwd);
     } else if (strstr(command, "echo") == command) {
-        // TODO handle variables
         char flags[FLAG_AMOUNT + 1] = "--\0";
         if (prompt != NULL)
             getFlags(flags, &prompt);
@@ -83,6 +82,11 @@ void interpret(char* cwd, char* prompt) {
         if (pid < 0) {
             exit(pid);
         }
-        wait_for_child(pid);
+        *childPid = pid;
+        int err = wait_for_child(pid);
+        if (err < 0) {
+            exit(err);
+        }
+        *childPid = -1;
     }
 }
