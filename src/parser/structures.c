@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "structures.h"
@@ -56,8 +57,9 @@ static size_t getElementCount(CommandExpression *pExpression)
     size_t length = 0;
     if (pExpression == NULL)
         return length;
-    CommandElement *ptr = *(pExpression->Elements);
-    while (ptr++ != NULL)
+
+    CommandElement **ptr = pExpression->Elements;
+    while (*ptr++ != NULL)
         length++;
     return length;
 }
@@ -176,9 +178,9 @@ void DeleteCommandExpression(CommandExpression *pExpression)
     if (pExpression == NULL)
         return;
 
-    CommandElement *ptr = *(pExpression->Elements);
-    while (ptr != NULL)
-        free(ptr++);
+    CommandElement **ptr = pExpression->Elements;
+    while (*ptr != NULL)
+        free(*ptr++);
     free(pExpression->Elements);
 
     free(pExpression);

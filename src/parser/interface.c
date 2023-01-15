@@ -34,48 +34,48 @@ PipeExpression *GetTree(const char *pLine)
 static void printIndents(int count)
 {
     for (int i = 0; i < count; i++)
-        fputs(" ", stdout);
+        fputs(" ", stderr);
 }
 
 void PrintPipeExpression(PipeExpression *pExpression, int indent)
 {
     printIndents(indent);
-    fputs("PipeExpression", stdout);
+    fputs("PipeExpression", stderr);
     if (pExpression == NULL) {
-        fputs(" (NULL)\n", stdout);
+        fputs(" (NULL)\n", stderr);
         return;
     }
-    fputs("\n", stdout);
+    fputs("\n", stderr);
 
     printIndents(indent + 1);
-    fputs("Left\n", stdout);
+    fputs("Left\n", stderr);
     PrintPipeExpression(pExpression->Left, indent + 2);
     printIndents(indent + 1);
-    fputs("Right\n", stdout);
+    fputs("Right\n", stderr);
     PrintCommandExpression(pExpression->Right, indent + 2);
 }
 
 void PrintCommandExpression(CommandExpression *pExpression, int indent)
 {
     printIndents(indent);
-    fputs("CommandExpression", stdout);
+    fputs("CommandExpression", stderr);
     if (pExpression == NULL) {
-        fputs(" (NULL)\n", stdout);
+        fputs(" (NULL)\n", stderr);
         return;
     }
-    fputs("\n", stdout);
+    fputs("\n", stderr);
 
     printIndents(indent + 1);
-    fputs("Elements", stdout);
+    fputs("Elements", stderr);
     if (pExpression->Elements == NULL) {
-        fputs(" (NULL)\n", stdout);
+        fputs(" (NULL)\n", stderr);
         return;
     }
-    fputs("\n", stdout);
+    fputs("\n", stderr);
 
-    CommandElement *ptr = *(pExpression->Elements);
-    while (ptr != NULL)
-        PrintCommandElement(ptr++, indent + 2);
+    CommandElement **ptr = pExpression->Elements;
+    while (*ptr != NULL)
+        PrintCommandElement(*ptr++, indent + 2);
 }
 
 static const char *getCommandElementType(CommandElementType type)
@@ -94,17 +94,17 @@ static const char *getCommandElementType(CommandElementType type)
 void PrintCommandElement(CommandElement *pElement, int indent)
 {
     printIndents(indent);
-    fputs("CommandElement", stdout);
+    fputs("CommandElement", stderr);
     if (pElement == NULL) {
-        fputs(" (NULL)\n", stdout);
+        fputs(" (NULL)\n", stderr);
         return;
     }
-    fputs("\n", stdout);
+    fputs("\n", stderr);
 
     printIndents(indent + 1);
-    printf("Type: %s\n", getCommandElementType(pElement->Type));
+    fprintf(stderr, "Type: %s\n", getCommandElementType(pElement->Type));
     printIndents(indent + 1);
-    printf("Name: %s\n", pElement->Name == NULL ? "NULL" : pElement->Name);
+    fprintf(stderr, "Name: %s\n", pElement->Name == NULL ? "NULL" : pElement->Name);
     printIndents(indent + 1);
-    printf("Value: %s\n", pElement->Value == NULL ? "NULL" : pElement->Value);
+    fprintf(stderr, "Value: %s\n", pElement->Value == NULL ? "NULL" : pElement->Value);
 }

@@ -39,7 +39,7 @@
 
 %left       OP_PIPE
 %precedence OP_PULL OP_PUSH
-/* %precedence OP_EXPR_END */
+%precedence OP_EXPR_END
 
 %type<pipe>    pipe_expression
 %type<command> command
@@ -52,10 +52,11 @@
 
 %%
 
-/* expressions:
+expressions:
   pipe_expression
+    { *pExpression = $1; }
 | expressions OP_EXPR_END whitespaces.opt pipe_expression.opt
-; */
+;
 
 pipe_expression:
   command whitespaces.opt

@@ -21,7 +21,7 @@
 
 %%
 
-";"  { continue; /* return OP_EXPR_END; */ }
+";"  { return OP_EXPR_END; }
 "|"  { return OP_PIPE; }
 "<"  { return OP_PULL; }
 ">"  { return OP_PUSH; }
