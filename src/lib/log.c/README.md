@@ -1,4 +1,5 @@
 From `https://github.com/rxi/log.c`
+Fit into the project, by adding and removing necessary functionality
 
 # log.c
 A simple logging library implemented in C99
