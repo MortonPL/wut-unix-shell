@@ -24,7 +24,9 @@
 %union {
     int value;
     char *text;
-    PipeExpression *expression;
+    PipeExpression *pipe;
+    CommandExpression *command;
+    CommandElement *element;
 }
 
 
@@ -38,6 +40,11 @@
 %left       OP_PIPE
 %precedence OP_PULL OP_PUSH
 %precedence OP_EXPR_END
+
+%type<pipe>    pipe_expression
+%type<command> command
+%type<element> argument_or_redirection
+%type<text>    string
 
 
 /* GRAMMAR RULES */
