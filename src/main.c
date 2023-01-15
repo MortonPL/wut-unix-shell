@@ -1,7 +1,8 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include "lib/mmem.h"
 #include "parser/tree.h"
 #include "pipes/pipes.h"
@@ -134,10 +135,16 @@ int main()
     superprint(printf);
     AutoExit(GlobalMemContext);
 
-    const char *line = "abcd=4 echo -l >/dev/null | grep";
-    const char *result = GetTree(line);
-    (void)result;
-    printf("parsed\n");
+    const int bufsize = 256;
+    char buffer[bufsize];
+    while (fgets(buffer, bufsize, stdin) != NULL)
+    {
+        if (strlen(buffer) == 0)
+            continue;
+        const char *result = GetTree(buffer);
+        (void)result;
+        printf("parsed\n");
+    }
 
     return 0;
 }
