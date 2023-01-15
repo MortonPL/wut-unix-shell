@@ -14,7 +14,18 @@ void handleInput(char* cwd, char* command) {
     interpret(cwd, command);
 }
 
+void handleSignal(int signalNumber) {
+    // TODO do something
+    // TODO pass on to child process
+}
+
 void interface(const int isBatch, const char** argumentsValues) {
+    struct sigaction sa;
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = handleSignal;
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGQUIT, &sa, NULL);
+
     MemContext context = MakeContext();
     char* cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);

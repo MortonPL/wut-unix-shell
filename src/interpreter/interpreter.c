@@ -78,6 +78,7 @@ void interpret(char* cwd, char* prompt) {
         char* envp[] = {pathenv, NULL};
         char* args[] = {command, prompt, NULL};
 
+        // TODO this forever steals stdout for some reason
         int pid = attach_command(STDIN_FILENO, STDOUT_FILENO, NULL, command, args, envp);
         if (pid < 0) {
             exit(pid);
