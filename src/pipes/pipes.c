@@ -18,7 +18,23 @@
 extern const char* Temp = "/tmp";
 extern const char* DevNull = "/dev/null";
 
-void generate_unique_temporary_filename(char* path_buf) {
+int devnull_in() {
+    return open(DevNull, O_WRONLY);
+}
+
+int devnull_out() {
+    return open(DevNull, O_WRONLY);
+}
+
+int file_in(char* file) {
+    open(file, O_RDONLY);
+}
+
+int file_out(char* file) {
+    open(file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+}
+
+void generate_fifo_filename(char* path_buf) {
     uuid_t uuid_bytes;
     strncpy(path_buf, Temp, 4);
     path_buf[4] = '/';
@@ -26,49 +42,23 @@ void generate_unique_temporary_filename(char* path_buf) {
     uuid_unparse(uuid_bytes, &path_buf[5]);
 }
 
-int open_in_pipe(char* path) {
-    return open(path, O_RDONLY | O_NONBLOCK | __O_CLOEXEC);
-}
-
-int open_out_pipe(char* path) {
-    return open(path, O_WRONLY | O_NONBLOCK | __O_CLOEXEC);
-}
-
-int std_in_pipe() {
-    return dup(STDIN_FILENO);
-}
-
-int std_out_pipe() {
-    return dup(STDOUT_FILENO);
-}
-
-int null_in_pipe() {
-    return open(DevNull, O_WRONLY | __O_CLOEXEC);
-}
-
-int null_out_pipe() {
-    return open(DevNull, O_WRONLY | __O_CLOEXEC);
-}
-
 int create_pipe_pair(int* pipe_in, int* pipe_out) {
     char fifo_path[42];
-    generate_unique_temporary_filename(fifo_path);
+    generate_fifo_filename(fifo_path);
     
     int mkfifo_res = mkfifo(fifo_path, S_IRUSR | S_IWUSR);
     RETURN_ON_ERR(mkfifo_res, -1);
-    
-    int pipe_in_res = open_in_pipe(fifo_path);
+    int pipe_in_res = open(fifo_path, O_RDONLY | O_NONBLOCK | __O_CLOEXEC);
     RETURN_ON_ERR(pipe_in_res, -2);
-    
-    int pipe_out_res = open_out_pipe(fifo_path);
-    RETURN_ON_ERR(pipe_out_res, -3);
+    int pipe_out_res = open(fifo_path, O_WRONLY | O_NONBLOCK | __O_CLOEXEC);
+    RETURN_ON_ERR(pipe_out_res, -2);
     
     *pipe_in = pipe_in_res;
     *pipe_out = pipe_out_res;
     return 0;
 }
 
-int wait_for_data(int fd) {
+int wait_fd_ready(int fd) {
     struct pollfd pfd;
 
     pfd.fd = fd;
@@ -85,45 +75,54 @@ int wait_for_data(int fd) {
 
 int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
     int res;
-    res = fcntl(pipe_in, F_SETFD, 0);
-    RETURN_ON_ERR(res, -1);
-    res = fcntl(pipe_out, F_SETFD, 0);
-    RETURN_ON_ERR(res, -1);
-
+    // Ensure provided pipes are inherited
+    if (pipe_in != STDIN_FILENO) {
+        res = fcntl(pipe_in, F_SETFD, 0);
+        RETURN_ON_ERR(res, -1);
+    }
+    if (pipe_in != STDOUT_FILENO) {
+        res = fcntl(pipe_out, F_SETFD, 0);
+        RETURN_ON_ERR(res, -1);
+    }
+    // Run internal setup
     int fork_res = fork();
     if (fork_res == 0) {
         int child_res = exec_command(pipe_in, pipe_out, callback, file, argv, envp);
         exit(child_res);
     }
     RETURN_ON_ERR(fork_res, -2);
-
-    res = close(pipe_in);
-    RETURN_ON_ERR(res, -3);
-    res = close(pipe_out);
-    RETURN_ON_ERR(res, -3);
-
+    // Close pipes so they don't get inherited later
+    if (pipe_in != STDIN_FILENO) {
+        res = close(pipe_in);
+        RETURN_ON_ERR(res, -3);
+    }
+    if (pipe_in != STDOUT_FILENO) {
+        res = close(pipe_out);
+        RETURN_ON_ERR(res, -3);
+    }
     return fork_res;
 }
 
 int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
     int res;
-    res = dup2(pipe_in, STDIN_FILENO);
-    RETURN_ON_ERR(res, -1);
-    res = dup2(pipe_out, STDOUT_FILENO);
-    RETURN_ON_ERR(res, -1);
-    res = dup2(pipe_out, STDERR_FILENO);
-    RETURN_ON_ERR(res, -1);
-    res = close(pipe_in);
-    RETURN_ON_ERR(res, -2);
-    res = close(pipe_out);
-    RETURN_ON_ERR(res, -2);
-
-    if (callback != NULL)
-        res = callback(file, argv, envp);
-    else
-        res = execvpe(file, argv, envp);
+    // Overwrite standard pipes and close the provided ones if necessary
+    if (pipe_in != STDIN_FILENO) {
+        res = dup2(pipe_in, STDIN_FILENO);
+        RETURN_ON_ERR(res, -1);
+        res = close(pipe_in);
+        RETURN_ON_ERR(res, -2);
+    }
+    if (pipe_out != STDOUT_FILENO) {
+        res = dup2(pipe_out, STDOUT_FILENO);
+        RETURN_ON_ERR(res, -1);
+        res = close(pipe_out);
+        RETURN_ON_ERR(res, -2);
+    }
+    // Run internal or external command
+    res = (callback != NULL)
+        ? callback(file, argv, envp)
+        : execvpe(file, argv, envp);
     RETURN_ON_ERR(res, -3);
-
     return 0;
 }
 

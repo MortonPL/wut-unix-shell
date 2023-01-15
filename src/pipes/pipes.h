@@ -8,21 +8,21 @@ extern const char* Temp;
 /// @brief Path to /dev/null device
 extern const char* DevNull;
 
-/// @brief Clones the stdin pipe
-/// @return Same as dup()
-int std_in_pipe();
-
-/// @brief Clones the stdout pipe
-/// @return Same as dup()
-int std_out_pipe();
-
 /// @brief Opens read pipe on /dev/null
 /// @return Same as open()
-int null_in_pipe();
+int devnull_in();
 
 /// @brief Opens write pipe on /dev/null
 /// @return Same as open()
-int null_out_pipe();
+int devnull_out();
+
+/// @brief Opens a read descriptor on a file
+/// @return Same as open()
+int file_in(char* file);
+
+/// @brief Opens a write descriptor on a file, creates it if necessary, truncates if already exists
+/// @return Same as open()
+int file_out(char* file);
 
 /// @brief Creates a new named pipe with attached in and out descriptors
 /// @param pipe_in Pointer to the in pipe descriptor
@@ -33,7 +33,7 @@ int create_pipe_pair(int *pipe_in, int *pipe_out);
 /// @brief Waits for descriptor to contain data or close
 /// @param fd File descriptor to watch
 /// @return 0 on data or close, negative on error
-int wait_for_data(int fd);
+int wait_fd_ready(int fd);
 
 /// @brief Signature of a function that can be executed as a command
 typedef int (*InternalCommand)(const char *file, char *const *argv, char *const *envp);
