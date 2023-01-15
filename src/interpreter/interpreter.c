@@ -75,6 +75,7 @@ void interpret(char* cwd, char* prompt) {
         strcat(shPrompt, "; ");
         strcat(shPrompt, command);
         if (prompt != NULL) {
+            strcat(shPrompt, " ");
             strcat(shPrompt, prompt);
         }
         system(shPrompt);

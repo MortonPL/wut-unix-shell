@@ -3,7 +3,7 @@
 #define COMMAND_SIZE 256
 #define FLAG_AMOUNT 2
 
-void handle_input(char* cwd, char* command) {
+void handleInput(char* cwd, char* command) {
     printf("command: %s \n", command);
     PipeExpression *expression = GetTree(command);
     DeletePipeExpression(expression);
@@ -25,7 +25,7 @@ void interface(const int isBatch, const char** argumentsValues) {
         while (fgets(command, COMMAND_SIZE, input) != NULL) {
             if (strlen(command) == 0)
                 continue;
-            handle_input(cwd,command);
+            handleInput(cwd,command);
         }
     } else {
         while (strstr(command, "exit") != command) {
@@ -33,7 +33,7 @@ void interface(const int isBatch, const char** argumentsValues) {
                 continue;
             printf("> ");
             fgets(command, COMMAND_SIZE, stdin);
-            handle_input(cwd, command);
+            handleInput(cwd, command);
         }
     }
     AutoExit(context);
