@@ -1,11 +1,5 @@
 #include "logger.h"
 
-#ifdef DEBUG
-const int Debug = 1;
-#else
-const int Debug = 0;
-#endif
-
 void print_content(char *const *content) {
     if (content != NULL) {
         char *subcontent = content[0];
@@ -75,15 +69,47 @@ int init_logger() {
     char log_file_path[64] = "logs/";
     current_time_string(&log_file_path[strlen(log_file_path)]);
     int log_mode;
-    if (Debug) {
+    #ifdef DEBUG
         strcat(log_file_path, "-debug.txt");
         log_mode = LOG_TRACE;
-    }
-    else {
+    #else
         strcat(log_file_path, "-release.txt");
         log_mode = LOG_ERROR;
-    }
+    #endif
     FILE *log_file = fopen(log_file_path, "w");
     log_add_fp(log_file, log_mode);
     return 0;
+}
+
+void __panic(const char *file, int line, const char *fmt, ...) {
+    log_Event ev = {
+        .fmt   = fmt,
+        .file  = file,
+        .line  = line,
+        .level = LOG_FATAL,
+    };
+    va_start(ev.ap, fmt);
+    vlog_log(ev);
+    va_end(ev.ap);
+    exit(-1);
+}
+
+int __expect(int status_code, const char *file, int line, const char *fmt, ...) {
+    if (status_code < 0) {
+        log_Event ev = {
+            .fmt   = fmt,
+            .file  = file,
+            .line  = line,
+            .level = LOG_FATAL,
+        };
+        va_start(ev.ap, fmt);
+        vlog_log(ev);
+        va_end(ev.ap);
+        exit(-1);
+    }
+    return status_code;
+}
+
+int __unwrap(int status_code, const char *file, int line) {
+    return __expect(status_code, file, line, "OS error: %s", strerror(errno));
 }
