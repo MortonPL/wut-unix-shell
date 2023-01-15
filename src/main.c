@@ -5,6 +5,10 @@
 #include "lib/mmem.h"
 #include "parser/parser.h"
 #include "pipes/pipes.h"
+#include "log.c/src/log.h"
+#include <sys/stat.h>
+#include <errno.h>
+#include <time.h>
 
 typedef int (*helloer)(const char* msg, ...);
 
@@ -83,8 +87,27 @@ int delayed_close_command(const char *file, char *const *argv, char *const *envp
     return 0;
 }
 
+int init_logger() {
+    int res = mkdir("logs", S_IRWXU | S_IRWXG | S_IRWXO);
+    if (res < 0)
+        if (errno != EEXIST)
+            return res;
+    
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+    char s[] = "logs/xxxx-xx-xx_xx:xx:xx.txt";
+    strftime(&s[5], 20, "%Y-%m-%d %H:%M:%S", tm);
+    s[24] = '.';
+    FILE *log_file = fopen(s, "w");
+    log_add_fp(log_file, LOG_TRACE);
+    return 0;
+}
+
 int main()
 {
+    init_logger();
+    log_info("Shell started.");
+
     // Basic info dump
     // char *args[] = {"Arg1", "Arg2", NULL};
     // extern char **environ;
