@@ -6,6 +6,7 @@ set(SRC_LIB_FILES
     # main
     mmem.c
     strpls.c
+    logger.c
     log.c/src/log.c
 )
 
