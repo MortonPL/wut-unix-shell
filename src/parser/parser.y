@@ -1,11 +1,12 @@
 /* PROLOGUE */
 
 %{
+  #include "structures.h"
   #include "parser.h"
   #include "lexer.h"
 
   // reference the implementation provided in lexer.l
-  int yyerror(const char **expression, yyscan_t scanner, const char *msg);
+  int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage);
 %}
 
 %code requires {
@@ -17,12 +18,13 @@
 
 %define api.pure
 %lex-param { yyscan_t scanner }
-%parse-param { const char **text }
+%parse-param { PipeExpression **pExpression }
 %parse-param { yyscan_t scanner }
 
 %union {
     int value;
-    const char *text;
+    char *text;
+    PipeExpression *expression;
 }
 
 

@@ -1,6 +1,7 @@
 # MULTI-PURPOSE PROJECT SCRIPT
 # Init variables
 CONFIGURE=0;    # Configure CMake
+PARSER=0;      # Generate flex/bison
 TEST=0          # Run tests
 BUILD_TYPE="";  # CMake build type
 DIR="";         # Build output directory
@@ -18,6 +19,7 @@ print_help() {
     echo "    shelltest";
     echo "Options:";
     echo "    -c, --configure                      Force (re)generate CMake configuration files";
+    echo "    -p, --parser                         Force (re)generate flex and bison files";
     echo "    -h, --help                           Display this message";
     echo "    -t, --tests                          Run tests after build";
 }
@@ -35,6 +37,10 @@ parse_args() {
             ;;
         "-c" | "--configure")
             CONFIGURE=1;
+            ;;
+        "-p" | "--parser")
+            CONFIGURE=1;
+            PARSER=1;
             ;;
         "-t" | "--tests")
             TEST=1;
@@ -77,7 +83,7 @@ parse_args() {
 do_config() {
     if [ $CONFIGURE -eq 1 ]; then
         echo "Force regenerating build configuration...";
-        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_TYPE;
+        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DGEN_PARSER=$PARSER;
         echo "Done.";
     fi
 }

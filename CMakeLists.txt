@@ -34,7 +34,7 @@ if(NOT MSVC)
     add_compile_options(-Wextra)
     add_compile_options(-Wpedantic)
     add_compile_options(-Wconversion)
-    
+
     # enable Werror if possible
     if (CMAKE_BUILD_TYPE STREQUAL "RELEASE")
         include(CheckCCompilerFlag)

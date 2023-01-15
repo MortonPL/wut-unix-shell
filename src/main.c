@@ -34,8 +34,26 @@ void superprint(helloer fun)
     // won't leak!
 }
 
-int main(const int argumentsCount, char *argumentsValues[])
+int parseArgs(const int ac, const char** av, int* isBatch)
 {
+    int i = 1;
+    while (i < ac) {
+        if (strcmp(av[i], "-c") == 0) {
+            if (++i < ac) {
+                *isBatch = i;
+                return 0;
+            } else {
+                fprintf(stderr, "Missing command.\n");
+                return 1;
+            }
+        }
+        i++;
+    }
+    return 0;
+}
+
+
+int main(const int argumentsCount, const char *argumentsValues[]) {
     init_logger();
     log_info("Shell started.");
 
@@ -84,16 +102,14 @@ int main(const int argumentsCount, char *argumentsValues[])
     // pid_t cmd = attach_command(pipe_in, pipe_out, dump_info_command, "Dump Info Command", NULL, NULL);
     // wait_for_child(cmd);
 
+    int isBatch = 0;
+    if (parseArgs(argumentsCount, argumentsValues, &isBatch) != 0)
+        return 1;
+
     AutoEntry(GlobalMemContext);
     superprint(printf);
 
-    int isBatch = 0;
-    if (argumentsCount > 1) {
-        if (strcmp(argumentsValues[1], "-c") == 0) {
-            isBatch = 1;
-        }
-    }
-    interface(isBatch);
+    interface(isBatch, argumentsValues);
 
     AutoExit(GlobalMemContext);
     return 0;

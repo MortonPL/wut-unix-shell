@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 11 "parser.y"
+#line 12 "parser.y"
 
   typedef void* yyscan_t;
 
@@ -76,12 +76,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 23 "parser.y"
+#line 24 "parser.y"
 
     int value;
-    const char *text;
+    char *text;
+    PipeExpression *expression;
 
-#line 85 "parser.h"
+#line 86 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -91,6 +92,6 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yyparse (const char **text, yyscan_t scanner);
+int yyparse (PipeExpression **pExpression, yyscan_t scanner);
 
 #endif /* !YY_YY_PARSER_H_INCLUDED  */
