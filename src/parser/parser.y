@@ -1,16 +1,32 @@
 /* PROLOGUE */
 
 %{
-  #include <stdio.h>
+  #include "parser.h"
+  #include "lexer.h"
 
-  int yylex(void);
-  void yyerror(char const *s);
+  // reference the implementation provided in lexer.l
+  int yyerror(const char **expression, yyscan_t scanner, const char *msg);
 %}
+
+%code requires {
+  typedef void* yyscan_t;
+}
+
+%output "parser.c"
+%defines "parser.h"
+
+%define api.pure
+%lex-param { yyscan_t scanner }
+%parse-param { const char **text }
+%parse-param { yyscan_t scanner }
+
+%union {
+    int value;
+    const char *text;
+}
 
 
 /* DECLARATIONS */
-
-%define api.value.type {char*}
 
 %token STRING_PART
 %token VARIABLE_READ
@@ -110,13 +126,3 @@ whitespaces.opt:
 
 
 /* EPILOGUE */
-
-int bisonMain(void)
-{
-  return yyparse();
-}
-
-void yyerror(char const *s)
-{
-  fprintf(stderr, "ERROR: %s\n", s);
-}

@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "lib/mmem.h"
-#include "parser/parser.h"
+#include "parser/tree.h"
 #include "pipes/pipes.h"
 
 typedef int (*helloer)(const char* msg, ...);
@@ -134,11 +134,10 @@ int main()
     superprint(printf);
     AutoExit(GlobalMemContext);
 
-    while (1)
-    {
-        int res = Scan();
-        printf("%d\n", res);
-    }
+    const char *line = "abcd=4 echo -l >/dev/null | grep";
+    const char *result = GetTree(line);
+    (void)result;
+    printf("parsed\n");
 
     return 0;
 }
