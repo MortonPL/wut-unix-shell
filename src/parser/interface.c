@@ -4,8 +4,6 @@
 #include "parser.h"
 #include "lexer.h"
 
-int yyparse(PipeExpression **pExpression, yyscan_t pScanner);
-
 void PrintTree(const char *pLine)
 {
     PipeExpression *pExpression = NULL;
@@ -42,6 +40,32 @@ static void printIndents(int count)
         fputs(" ", stderr);
 }
 
+static const char *getCommandWordType(CommandWordType type)
+{
+    if (type == CW_BASIC)
+        return "CW_BASIC";
+    if (type == CW_ASSIGNMENT)
+        return "CW_ASSIGNMENT";
+    if (type == CW_REDIRECTION_IN)
+        return "CW_REDIRECTION_IN";
+    if (type == CW_REDIRECTION_OUT)
+        return "CW_REDIRECTION_OUT";
+    return "???";
+}
+
+static const char *getWordElementType(WordElementType type)
+{
+    if (type == WE_BASIC_STRING)
+        return "WE_BASIC_STRING";
+    if (type == WE_ESCAPED_STRING)
+        return "WE_ESCAPED_STRING";
+    if (type == WE_VARIABLE_READ)
+        return "WE_VARIABLE_READ";
+    if (type == WE_VARIABLE_WRITE)
+        return "WE_VARIABLE_WRITE";
+    return "???";
+}
+
 void PrintPipeExpression(PipeExpression *pExpression, int indent)
 {
     printIndents(indent);
@@ -53,11 +77,16 @@ void PrintPipeExpression(PipeExpression *pExpression, int indent)
     fputs("\n", stderr);
 
     printIndents(indent + 1);
-    fputs("Left\n", stderr);
-    PrintPipeExpression(pExpression->Left, indent + 2);
-    printIndents(indent + 1);
-    fputs("Right\n", stderr);
-    PrintCommandExpression(pExpression->Right, indent + 2);
+    fprintf(stderr, "Commands[%zu]", pExpression->Length);
+    if (pExpression->Commands == NULL) {
+        fputs(" (NULL)\n", stderr);
+        return;
+    }
+    fputs("\n", stderr);
+
+    CommandExpression **ptr = pExpression->Commands;
+    while (*ptr != NULL)
+        PrintCommandExpression(*ptr++, indent + 2);
 }
 
 void PrintCommandExpression(CommandExpression *pExpression, int indent)
@@ -71,35 +100,48 @@ void PrintCommandExpression(CommandExpression *pExpression, int indent)
     fputs("\n", stderr);
 
     printIndents(indent + 1);
-    fputs("Elements", stderr);
-    if (pExpression->Elements == NULL) {
+    fprintf(stderr, "Words[%zu]", pExpression->Length);
+    if (pExpression->Words == NULL) {
         fputs(" (NULL)\n", stderr);
         return;
     }
     fputs("\n", stderr);
 
-    CommandElement **ptr = pExpression->Elements;
+    CommandWord **ptr = pExpression->Words;
     while (*ptr != NULL)
-        PrintCommandElement(*ptr++, indent + 2);
+        PrintCommandWord(*ptr++, indent + 2);
 }
 
-static const char *getCommandElementType(CommandElementType type)
-{
-    if (type == CE_ASSIGNMENT)
-        return "CE_ASSIGNMENT";
-    if (type == CE_WORD)
-        return "CE_WORD";
-    if (type == CE_REDIRECTION_IN)
-        return "CE_REDIRECTION_IN";
-    if (type == CE_REDIRECTION_OUT)
-        return "CE_REDIRECTION_OUT";
-        return "???";
-}
-
-void PrintCommandElement(CommandElement *pElement, int indent)
+void PrintCommandWord(CommandWord *pWord, int indent)
 {
     printIndents(indent);
-    fputs("CommandElement", stderr);
+    fputs("CommandWord", stderr);
+    if (pWord == NULL) {
+        fputs(" (NULL)\n", stderr);
+        return;
+    }
+    fputs("\n", stderr);
+
+    printIndents(indent + 1);
+    fprintf(stderr, "Type: %s\n", getCommandWordType(pWord->Type));
+
+    printIndents(indent + 1);
+    fprintf(stderr, "Elements[%zu]", pWord->Length);
+    if (pWord->Elements == NULL) {
+        fputs(" (NULL)\n", stderr);
+        return;
+    }
+    fputs("\n", stderr);
+
+    WordElement **ptr = pWord->Elements;
+    while (*ptr != NULL)
+        PrintWordElement(*ptr++, indent + 2);
+}
+
+void PrintWordElement(WordElement *pElement, int indent)
+{
+    printIndents(indent);
+    fputs("WordElement", stderr);
     if (pElement == NULL) {
         fputs(" (NULL)\n", stderr);
         return;
@@ -107,9 +149,7 @@ void PrintCommandElement(CommandElement *pElement, int indent)
     fputs("\n", stderr);
 
     printIndents(indent + 1);
-    fprintf(stderr, "Type: %s\n", getCommandElementType(pElement->Type));
+    fprintf(stderr, "Type: %s\n", getWordElementType(pElement->Type));
     printIndents(indent + 1);
-    fprintf(stderr, "Name: %s\n", pElement->Name == NULL ? "NULL" : pElement->Name);
-    printIndents(indent + 1);
-    fprintf(stderr, "Value: %s\n", pElement->Value == NULL ? "NULL" : pElement->Value);
+    fprintf(stderr, "Value[%zu]: %s\n", pElement->Length, pElement->Value == NULL ? "NULL" : pElement->Value);
 }

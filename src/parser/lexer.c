@@ -992,13 +992,13 @@ YY_RULE_SETUP
 #line 31 "lexer.l"
 { yytext[strlen(yytext) - 1] = '\0';
                                     yylval->text = yytext + 1;
-                                    return STRING_PART; }
+                                    return ESCAPED_STRING_PART; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 34 "lexer.l"
 { yylval->text = yytext + 1;
-                                    return STRING_PART; }
+                                    return ESCAPED_STRING_PART; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
@@ -1015,7 +1015,7 @@ YY_RULE_SETUP
 case 10:
 YY_RULE_SETUP
 #line 40 "lexer.l"
-{ yylval->text = yytext + 1;
+{ yylval->text = yytext;
                                     return VARIABLE_READ; }
 	YY_BREAK
 case 11:

@@ -61,13 +61,14 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     STRING_PART = 258,             /* STRING_PART  */
-    VARIABLE_READ = 259,           /* VARIABLE_READ  */
-    VARIABLE_WRITE = 260,          /* VARIABLE_WRITE  */
-    WHITESPACES = 261,             /* WHITESPACES  */
-    OP_PIPE = 262,                 /* OP_PIPE  */
-    OP_PULL = 263,                 /* OP_PULL  */
-    OP_PUSH = 264,                 /* OP_PUSH  */
-    OP_EXPR_END = 265              /* OP_EXPR_END  */
+    ESCAPED_STRING_PART = 259,     /* ESCAPED_STRING_PART  */
+    VARIABLE_READ = 260,           /* VARIABLE_READ  */
+    VARIABLE_WRITE = 261,          /* VARIABLE_WRITE  */
+    WHITESPACES = 262,             /* WHITESPACES  */
+    OP_PIPE = 263,                 /* OP_PIPE  */
+    OP_PULL = 264,                 /* OP_PULL  */
+    OP_PUSH = 265,                 /* OP_PUSH  */
+    OP_EXPR_END = 266              /* OP_EXPR_END  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -82,9 +83,9 @@ union YYSTYPE
     char *text;
     PipeExpression *pipe;
     CommandExpression *command;
-    CommandElement *element;
+    CommandWord *word;
 
-#line 88 "parser.h"
+#line 89 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

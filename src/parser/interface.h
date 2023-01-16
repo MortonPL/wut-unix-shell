@@ -6,4 +6,5 @@ void PrintTree(const char *pLine);
 
 void PrintPipeExpression(PipeExpression *pExpression, int indent);
 void PrintCommandExpression(CommandExpression *pExpression, int indent);
-void PrintCommandElement(CommandElement *pElement, int indent);
+void PrintCommandWord(CommandWord *pWord, int indent);
+void PrintWordElement(WordElement *pElement, int indent);

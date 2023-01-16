@@ -30,14 +30,14 @@
                                     return VARIABLE_WRITE; }
 '.*'                              { yytext[strlen(yytext) - 1] = '\0';
                                     yylval->text = yytext + 1;
-                                    return STRING_PART; }
+                                    return ESCAPED_STRING_PART; }
 \\.                               { yylval->text = yytext + 1;
-                                    return STRING_PART; }
+                                    return ESCAPED_STRING_PART; }
 [^ \r\n\t\f\v=<>|\\'$;]+          { yylval->text = yytext;
                                     return STRING_PART; }
 =                                 { yylval->text = yytext;
                                     return STRING_PART; }
-\$[a-zA-Z_][a-zA-Z0-9_]*          { yylval->text = yytext + 1;
+\$[a-zA-Z_][a-zA-Z0-9_]*          { yylval->text = yytext;
                                     return VARIABLE_READ; }
 [ \r\t\f\v]+                      { return WHITESPACES; }
 \n                                { continue; }

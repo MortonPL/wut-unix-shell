@@ -27,13 +27,14 @@
     char *text;
     PipeExpression *pipe;
     CommandExpression *command;
-    CommandElement *element;
+    CommandWord *word;
 }
 
 
 /* DECLARATIONS */
 
 %token<text> STRING_PART
+%token<text> ESCAPED_STRING_PART
 %token<text> VARIABLE_READ
 %token<text> VARIABLE_WRITE
 %token       WHITESPACES
@@ -44,9 +45,9 @@
 
 %type<pipe>    pipe_expression
 %type<command> command
-%type<element> argument_or_redirection
-%type<element> redirection
-%type<element> string
+%type<word>    argument_or_redirection
+%type<word>    redirection
+%type<word>    string
 
 
 /* GRAMMAR RULES */
@@ -64,10 +65,10 @@ top_expression.trail.opt:
 ;
 
 pipe_expression:
-  command whitespaces.opt
-    { $$ = CreatePipeExpression(NULL, $1); }
-| pipe_expression OP_PIPE whitespaces.opt command
-    { $$ = CreatePipeExpression($1, $4); }
+  command whitespaces.opt 
+    { $$ = CreatePipeExpression($1); }
+| pipe_expression OP_PIPE whitespaces.opt command whitespaces.opt 
+    { $$ = $1; AppendToPipeExpression($$, $4); }
 ;
 
 command:
@@ -86,24 +87,28 @@ argument_or_redirection:
 
 redirection:
   OP_PULL whitespaces.opt string
-    { $$ = ConvertToRedirection(false, $3); }
+    { $$ = $3; $$->Type = CW_REDIRECTION_IN; }
 | OP_PUSH whitespaces.opt string
-    { $$ = ConvertToRedirection(true, $3); }
+    { $$ = $3; $$->Type = CW_REDIRECTION_OUT; }
 ;
 
 string:
   STRING_PART
-    { $$ = CreateWord($1); }
+    { $$ = CreateCommandWord(WE_BASIC_STRING, $1); }
+| ESCAPED_STRING_PART
+    { $$ = CreateCommandWord(WE_ESCAPED_STRING, $1); }
 | VARIABLE_READ
-    { $$ = CreateWord($1); }
+    { $$ = CreateCommandWord(WE_VARIABLE_READ, $1); }
 | VARIABLE_WRITE
-    { $$ = CreateAssignment($1); }
+    { $$ = CreateCommandWord(WE_VARIABLE_WRITE, $1); }
 | string STRING_PART
-    { $$ = $1; AppendToCommandElement($$, $2); }
+    { $$ = $1; AppendToCommandWord($$, WE_BASIC_STRING, $2); }
+| string ESCAPED_STRING_PART
+    { $$ = $1; AppendToCommandWord($$, WE_ESCAPED_STRING, $2); }
 | string VARIABLE_READ
-    { $$ = $1; AppendToCommandElement($$, $2); }
+    { $$ = $1; AppendToCommandWord($$, WE_VARIABLE_READ, $2); }
 | string VARIABLE_WRITE
-    { $$ = $1; AppendToCommandElement($$, $2); }
+    { $$ = $1; AppendToCommandWord($$, WE_VARIABLE_WRITE, $2); }
 ;
 
 whitespaces.opt:
