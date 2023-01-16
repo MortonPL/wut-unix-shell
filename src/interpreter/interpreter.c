@@ -166,7 +166,6 @@ char* process_word(CommandCtx* cctx, CommandWord *word) {
 void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
     size_t args_count = 0, eenv_count = 0;
     subprocess_args_eenv_counts(cmd_expr, &args_count, &eenv_count);
-    log_trace("Args: %i Eenv: %i", args_count, eenv_count);
     subprocess_allocate(cctx, args_count, eenv_count);
 
     size_t args_i = 0, eenv_i = 0;
@@ -232,6 +231,10 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         pipe_in = unwrap(file_in(curr_cctx->redir_in));
         log_trace("Input piped from %s", curr_cctx->redir_in);
     }
+    else if (ectx->next_pipe_in == 0) {
+        pipe_in = unwrap(file_in(DevNull));
+        log_trace("Input piped from %s", DevNull);
+    }
     else {
         pipe_in = STDIN_FILENO;
         log_trace("Input piped from standard input");
@@ -240,13 +243,18 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     // Configure out pipe
     if (curr_cctx->redir_out != NULL) {
         pipe_out = unwrap(file_out(curr_cctx->redir_out));
-        ectx->next_pipe_in = -1;
+        ectx->next_pipe_in = 0;
         log_trace("Output piped to %s", curr_cctx->redir_out);
     }
     else if (next_cctx == NULL) {
         pipe_out = STDOUT_FILENO;
         ectx->next_pipe_in = -1;
         log_trace("Output piped to standard output");
+    }
+    else if (next_cctx->redir_in != NULL) {
+        pipe_out = unwrap(file_out(DevNull));
+        ectx->next_pipe_in = 0;
+        log_trace("Output piped to %s", DevNull);
     }
     else {
         create_pipe_pair(&(ectx->next_pipe_in), &pipe_out);
