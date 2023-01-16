@@ -54,12 +54,9 @@ void print_str_arr(char *fmt, char **s) {
 void free_str_arr(char **s) {
     if (s != NULL)
         while (*s != NULL) {
-            log_trace("ww3 %s", *s);
             free(*s);
             s += 1;
-            log_trace("ww3");
         }
-    log_trace("");
 }
 
 /// @brief Counts amount of args and eenv in a command
@@ -101,28 +98,19 @@ void subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count)
 char* env_get(char **env, char *key) {
     size_t len = strlen(key);
     char **env_iter = env;
-    log_trace("%i", env);
-    log_info("Looking for '%s' in env", key);
     while (*env_iter != NULL) {
-        log_trace("env iter");
         if (strncmp(key, *env_iter, len) == 0 && (*env_iter)[len] == '=') {
-            log_info("Found: %s", *env_iter + len + 1);
             return *env_iter + len + 1;
         }
         env_iter++;
     }
-    log_trace("");
-    log_info("Looking for '%s' in environ", key);
     env_iter = environ;
     while (*env_iter != NULL) {
-        log_trace("environ iter");
         if (strncmp(key, *env_iter, len) == 0 && (*env_iter)[len] == '=') {
-            log_info("Found: %s", *env_iter + len + 1);
             return *env_iter + len + 1;
         }
         env_iter++;
     }
-    log_trace("");
     return NULL;
 }
 
@@ -201,9 +189,7 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
                 cctx->redir_out = process_word(cctx, word);
                 break;
         }
-        DeleteCommandWord(word);
     }
-    DeleteCommandExpression(cmd_expr);
 }
 
 /// @brief Free command ctx struct
@@ -300,7 +286,6 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
 /// @return Pointer to the same command
 CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx) {
     process_command(cctx, **cmd_expr);
-    **cmd_expr = NULL;
     *cmd_expr += 1;
     return cctx;
 }
@@ -323,18 +308,14 @@ void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
     };
     CommandCtx *cctxs[2] = { NULL, NULL };
 
-    log_trace("");
     CommandExpression **cmd_expr = pipe_expr->Commands;
     if (*cmd_expr != NULL)
         cctxs[0] = iter_process_command(&cmd_expr, &cmd1);
 
-    log_trace("");
     if (*cmd_expr != NULL)
         cctxs[1] = iter_process_command(&cmd_expr, &cmd2);
 
-    log_trace("");
     run_command(ectx, cctxs[0], cctxs[1]);
-    log_trace("");
 
     while (cctxs[1] != NULL) {
         free_command(cctxs[0]);
@@ -347,7 +328,5 @@ void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
 
         run_command(ectx, cctxs[0], cctxs[1]);
     }
-    log_trace("");
     free_command(cctxs[0]);
-    log_trace("");
 }
