@@ -262,50 +262,83 @@ void subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count)
     log_trace("");
 }
 
+char* env_get(char **env, char *key) {
+    size_t len = strlen(key);
+    char **env_iter = env;
+    log_trace("%i", env);
+    log_info("Looking for '%s' in env", key);
+    while (*env_iter != NULL) {
+        log_trace("env iter");
+        if (strncmp(key, *env_iter, len) == 0 && (*env_iter)[len] == '=') {
+            log_info("Found: %s", *env_iter + len + 1);
+            return *env_iter + len + 1;
+        }
+        env_iter++;
+    }
+    log_trace("");
+    log_info("Looking for '%s' in environ", key);
+    env_iter = environ;
+    while (*env_iter != NULL) {
+        log_trace("environ iter");
+        if (strncmp(key, *env_iter, len) == 0 && (*env_iter)[len] == '=') {
+            log_info("Found: %s", *env_iter + len + 1);
+            return *env_iter + len + 1;
+        }
+        env_iter++;
+    }
+    log_trace("");
+    return NULL;
+}
+
 /// @brief Process a single assignment word
 /// @param cctx Command context
 /// @param word Command word
 /// @return Processed word
 char* process_word_assignment(CommandCtx* cctx, CommandWord *word) {
+    log_trace("");
     size_t len = 0;
     WordElement **els = word->Elements;
     while (*els != NULL) {
-        len += (*els)->Length;
+        log_trace("ww1");
+        if ((*els)->Type == WE_VARIABLE_READ)
+            len += (*els)->Length - 1;
+        else
+            len += (*els)->Length;
         els += 1;
     }
+    log_trace("");
     char *outbuf = malloc(len + 1);
     outbuf[len] = 0;
-
+    log_trace("");
     size_t offset = 0;
     els = word->Elements;
+    log_trace("");
     while (*els != NULL) {
-        memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
-        offset += (*els)->Length;
+        log_trace("ww2");
+        if ((*els)->Type == WE_VARIABLE_READ) {
+            log_trace("");
+            char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
+            log_trace("");
+            if (env_var != NULL) {
+                size_t var_len = strlen(env_var);
+                log_trace("");
+                memcpy(&outbuf[offset], env_var, var_len);
+                log_trace("");
+                offset += var_len;
+                //printf("%s\n", env_var);
+            }
+        } else {
+            log_trace("");
+            memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
+            offset += (*els)->Length;
+            //printf("%s\n", (*els)->Value);
+        }
+
         els += 1;
     }
+    log_trace("");
 
     return outbuf;
-}
-
-char* env_get(char **env, char *key) {
-    char **env_iter = env;
-    log_trace("%i", env);
-    while (*env_iter != NULL) {
-        log_trace("env iter");
-        if (strncmp(key, env_iter, strlen(key)) == 0)
-            return env_iter;
-        env_iter++;
-    }
-    log_trace("");
-    env_iter = environ;
-    while (*env_iter != NULL) {
-        log_trace("environ iter");
-        if (strncmp(key, env_iter, strlen(key)) == 0)
-            return env_iter;
-        env_iter++;
-    }
-    log_trace("");
-    return "";
 }
 
 /// @brief Process a single basic word
@@ -337,18 +370,21 @@ char* process_word_basic(CommandCtx* cctx, CommandWord *word) {
             log_trace("");
             char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
             log_trace("");
-            size_t var_len = strlen(env_var);
-            log_trace("");
-            memcpy(&outbuf[offset], env_var, var_len);
-            log_trace("");
-            offset += var_len;
-        }
-        else {
+            if (env_var != NULL) {
+                size_t var_len = strlen(env_var);
+                log_trace("");
+                memcpy(&outbuf[offset], env_var, var_len);
+                log_trace("");
+                offset += var_len;
+                //printf("%s\n", env_var);
+            }
+        } else {
             log_trace("");
             memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
             offset += (*els)->Length;
+            //printf("%s\n", (*els)->Value);
         }
-        
+
         els += 1;
     }
     log_trace("");
