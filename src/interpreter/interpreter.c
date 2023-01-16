@@ -6,14 +6,18 @@
 char stack[COMMAND_SIZE][COMMAND_SIZE] = {{0}};
 char previousWorkingDirectory[COMMAND_SIZE] = "~";
 
-void getFlags(char* flags, char prompt[COMMAND_SIZE][COMMAND_SIZE]) {
+unsigned getFlags(char* flags) {
     unsigned long currentFlag = 0;
-    while (*prompt != NULL && strstr(*prompt, "-") == *prompt && currentFlag < FLAG_AMOUNT) {
-        char* flag = strsep(prompt, " ");
+    unsigned i = 1;
+    while (*stack[i] != '\0' && *stack[i] == '-' && currentFlag < FLAG_AMOUNT) {
+        char flag[COMMAND_SIZE];
+        strcpy(flag, stack[i]);
         removeAllOccurences(flag, '-');
         strcpy(&flags[currentFlag], flag);
         currentFlag += strlen(flag);
+        i++;
     }
+    return i - 1;
 }
 
 void changeDirectory(char* cwd, const char* path) {
@@ -39,12 +43,12 @@ void printWorkingDirectory(const char* cwd) {
     printf("%s\n", cwd);
 }
 
-void print(const char* flags) {
+void print(const char* flags, unsigned skip) {
     // TODO handle variables
     if (strstr(flags, "e") != NULL) {
         // TODO implement
     }
-    int i = 1;
+    unsigned i = 1 + skip;
     char* element = stack[i];
     while (strcmp(element, "\0") != 0) {
         printf("%s ", element);
@@ -67,9 +71,10 @@ void handleCommand(int argumentCount, Env* env) {
         printWorkingDirectory(env->cwd);
     } else if (strstr(command, "echo") == command) {
         char flags[FLAG_AMOUNT + 1] = "--\0";
-        // if (arguments != NULL)
-        //     getFlags(flags, &arguments);
-        print(flags);
+        unsigned skip = 0;
+        if (argumentCount > 1)
+            skip = getFlags(flags);
+        print(flags, skip);
     } else if (strstr(command, "exit") == command) {
         // handled in interface()
     } else {
