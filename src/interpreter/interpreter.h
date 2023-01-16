@@ -15,6 +15,7 @@ typedef struct {
 
 typedef struct {
     char* cwd;
+    char previousWorkingDirectory[256];
     int* childPid;
     MapEntry variables[256];
     int variableCount;

@@ -3,15 +3,19 @@
 #define COMMAND_SIZE 256
 #define FLAG_AMOUNT 2
 
-char stack[COMMAND_SIZE][COMMAND_SIZE] = {{0}};
-char previousWorkingDirectory[COMMAND_SIZE] = "~";
 
-unsigned getFlags(char* flags) {
+typedef struct {
+    char stack[COMMAND_SIZE][COMMAND_SIZE];
+    char redirectIn[COMMAND_SIZE];
+    char redirectOut[COMMAND_SIZE];
+} CommandContext;
+
+unsigned getFlags(char* flags, CommandContext* ctx) {
     unsigned long currentFlag = 0;
     unsigned i = 1;
-    while (*stack[i] != '\0' && *stack[i] == '-' && currentFlag < FLAG_AMOUNT) {
+    while (*(ctx->stack[i]) != '\0' && *(ctx->stack[i]) == '-' && currentFlag < FLAG_AMOUNT) {
         char flag[COMMAND_SIZE];
-        strcpy(flag, stack[i]);
+        strcpy(flag, ctx->stack[i]);
         removeAllOccurences(flag, '-');
         strcpy(&flags[currentFlag], flag);
         currentFlag += strlen(flag);
@@ -20,21 +24,21 @@ unsigned getFlags(char* flags) {
     return i - 1;
 }
 
-void changeDirectory(char* cwd, const char* path) {
+void changeDirectory(const char* path, Env* env) {
     if (strstr(path, "-") == path) {
-        strswp(cwd, previousWorkingDirectory);
+        strswp(env->cwd, env->previousWorkingDirectory);
     } else {
-        strcpy(previousWorkingDirectory, cwd);
+        strcpy(env->previousWorkingDirectory, env->cwd);
         if (strstr(path, "..") == path) {
-            removeAllAfter(cwd, '/');
+            removeAllAfter(env->cwd, '/');
         } else if (strstr(path, "/") == path) {
-            strcpy(cwd, path);
+            strcpy(env->cwd, path);
         } else {
-            strcat(cwd, "/");
-            strcat(cwd, path);
+            strcat(env->cwd, "/");
+            strcat(env->cwd, path);
         }
     }
-    if (chdir(cwd) < 0) {
+    if (chdir(env->cwd) < 0) {
         exit(EXIT_FAILURE);
     }
 }
@@ -43,29 +47,30 @@ void printWorkingDirectory(const char* cwd) {
     printf("%s\n", cwd);
 }
 
-void print(const char* flags, unsigned skip) {
+void print(const char* flags, unsigned skip, CommandContext* ctx) {
     if (strstr(flags, "e") != NULL) {
         // TODO implement
     }
     unsigned i = 1 + skip;
-    char* element = stack[i];
+    char* element = ctx->stack[i];
     while (strcmp(element, "\0") != 0) {
         printf("%s ", element);
         i++;
-        element = stack[i];
+        element = ctx->stack[i];
     }
     if (strstr(flags, "n") == NULL) {
         printf("\n");
     }
 }
 
-void handleCommand(int argumentCount, Env* env) {
+void handleCommand(int argumentCount, CommandContext* ctx, Env* env) {
     // TODO add "export"
-    char* command = stack[0];
+    // TODO handle pipes and redirects
+    char* command = ctx->stack[0];
     if (strcmp(command, "") != 0) {
         if (strstr(command, "cd") == command) {
             if (argumentCount > 1) {
-                changeDirectory(env->cwd, stack[1]);
+                changeDirectory(ctx->stack[1], env);
             }
         } else if (strstr(command, "pwd") == command) {
             printWorkingDirectory(env->cwd);
@@ -73,18 +78,17 @@ void handleCommand(int argumentCount, Env* env) {
             char flags[FLAG_AMOUNT + 1] = "--\0";
             unsigned skip = 0;
             if (argumentCount > 1)
-                skip = getFlags(flags);
-            print(flags, skip);
+                skip = getFlags(flags, ctx);
+            print(flags, skip, ctx);
         } else if (strstr(command, "exit") == command) {
             // handled in interface()
         } else {
-            // TODO handle pipes and redirects
             char* path = getenv("PATH");
             char pathenv[strlen(path) + sizeof("PATH=")];
             char* envp[] = {pathenv, NULL};
 
             // TODO this forever steals stdout for some reason
-            int pid = attach_command(STDIN_FILENO, STDOUT_FILENO, NULL, command, stack, envp);
+            int pid = attach_command(STDIN_FILENO, STDOUT_FILENO, NULL, command, ctx->stack, envp);
             if (pid < 0) {
                 exit(pid);
             }
@@ -133,7 +137,7 @@ void handleWordElements(WordElement** elements, size_t length, char* buffer, Env
     }
 }
 
-int handleCommandWord(CommandWord* element, int stackIterator, Env* env) {
+int handleCommandWord(CommandWord* element, int stackIterator, CommandContext* ctx, Env* env) {
     if (element->Type == CW_ASSIGNMENT) {
         if (!(element->Length == 2 && element->Elements[0]->Type == WE_VARIABLE_WRITE)) {
             exit(EXIT_FAILURE);
@@ -148,28 +152,40 @@ int handleCommandWord(CommandWord* element, int stackIterator, Env* env) {
         handleWordElement(element->Elements[1], entry.value, env);
         env->variables[env->variableCount++] = entry;
         return 0;
-    } else {
-        // TODO handle redirections
+    } else if (element->Type == CW_REDIRECTION_IN) {
         char name[COMMAND_SIZE] = {0};
         handleWordElements(element->Elements, element->Length, name, env);
-        strcpy(stack[stackIterator], name);
+        strcpy(ctx->redirectIn, name);
+        return 0;
+    } else if (element->Type == CW_REDIRECTION_OUT) {
+        char name[COMMAND_SIZE] = {0};
+        handleWordElements(element->Elements, element->Length, name, env);
+        strcpy(ctx->redirectOut, name);
+        return 0;
+    } else {
+        char name[COMMAND_SIZE] = {0};
+        handleWordElements(element->Elements, element->Length, name, env);
+        strcpy(ctx->stack[stackIterator], name);
         return 1;
     }
 }
 
 void handleCommandExpression(CommandExpression* expression, Env* env) {
-    // zero stack
+    // init context
+    CommandContext ctx;
     for (int a=0; a<COMMAND_SIZE; a++) {
         for (int b=0; b<COMMAND_SIZE; b++) {
-            stack[a][b] = 0;
+            ctx.stack[a][b] = 0;
         }
+        ctx.redirectIn[a] = 0;
+        ctx.redirectOut[a] = 0;
     }
     // actual body
     int argumentCount = 0;
     for(size_t i = 0; i < expression->Length; i++) {
-        argumentCount += handleCommandWord(expression->Words[i], argumentCount, env);
+        argumentCount += handleCommandWord(expression->Words[i], argumentCount, &ctx, env);
     }
-    handleCommand(argumentCount, env);
+    handleCommand(argumentCount, &ctx, env);
 }
 
 void handlePipeExpression(PipeExpression* expression, Env* env) {

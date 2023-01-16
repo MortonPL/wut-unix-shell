@@ -31,6 +31,7 @@ void interface(const int isBatch, const char** argumentsValues) {
     MemContext context = MakeContext();
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
 
+    // init Env
     Env env;
     env.cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     env.childPid = &CHILD_PID;
@@ -38,7 +39,9 @@ void interface(const int isBatch, const char** argumentsValues) {
     if (getcwd(env.cwd, COMMAND_SIZE) == NULL) {
         exit(EXIT_FAILURE);
     }
+    strcpy(env.previousWorkingDirectory, env.cwd);
 
+    // actual body
     if (isBatch) {
         FILE* input = fmemopen(argumentsValues[isBatch], strlen(argumentsValues[isBatch]), "r");
         while (fgets(command, COMMAND_SIZE, input) != NULL) {
