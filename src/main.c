@@ -53,9 +53,6 @@ int parseArgs(const int ac, const char** av, int* isBatch)
 
 
 int main(const int argumentsCount, const char *argumentsValues[]) {
-    init_logger();
-    log_info("Shell started.");
-
     // Basic info dump
     // char *args[] = {"Arg1", "Arg2", NULL};
     // extern char **environ;
@@ -100,6 +97,9 @@ int main(const int argumentsCount, const char *argumentsValues[]) {
     // int pipe_out = file_out("./merol.txt");
     // pid_t cmd = attach_command(pipe_in, pipe_out, dump_info_command, "Dump Info Command", NULL, NULL);
     // wait_for_child(cmd);
+
+    init_logger();
+    log_info("Shell started.");
 
     int isBatch = 0;
     if (parseArgs(argumentsCount, argumentsValues, &isBatch) != 0)
