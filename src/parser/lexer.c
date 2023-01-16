@@ -2331,10 +2331,11 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* EPILOGUE */
 
-int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage) {
-    fprintf(stderr, "Error: %s\n", pMessage);
+int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage)
+{
     (void)pExpression;
     (void)pScanner;
+    (void)pMessage;
     return 0;
 }
 

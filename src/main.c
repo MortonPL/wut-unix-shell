@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "lib/mmem.h"
 #include "parser/interface.h"
+#include "parser/structures.h"
 #include "pipes/pipes.h"
 
 typedef int (*helloer)(const char* msg, ...);
@@ -168,12 +169,19 @@ int main(int ac, char** av)
 
     const int bufsize = 256;
     char buffer[bufsize];
-    while (fgets(buffer, bufsize, input) != NULL)
-    {
+    while (fgets(buffer, bufsize, input) != NULL) {
         if (strlen(buffer) == 0)
             continue;
-        PrintTree(buffer);
-        fprintf(stderr, "parsed\n");
+        buffer[bufsize - 1] = '\0';
+        LexerState lexerState;
+        InitializeLexer(&lexerState, buffer);
+        PipeExpression *pExpression = ReadPipeExpression(&lexerState);
+        while (pExpression != NULL) {
+            PrintPipeExpression(pExpression, 0);
+            DeletePipeExpression(pExpression);
+            pExpression = ReadPipeExpression(&lexerState);
+        }
+        CleanupLexer(&lexerState);
     }
 
     return 0;

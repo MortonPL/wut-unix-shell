@@ -4,34 +4,33 @@
 #include "parser.h"
 #include "lexer.h"
 
-void PrintTree(const char *pLine)
+
+bool InitializeLexer(LexerState *pState, const char *pLine)
 {
+    if (pState == NULL || pLine == NULL)
+        return false;
+    if (yylex_init(&(pState->Scanner)))
+        return false;
+    pState->State = yy_scan_string(pLine, pState->Scanner);
+    return true;
+}
+
+PipeExpression *ReadPipeExpression(LexerState *pState)
+{
+    if (pState == NULL)
+        return NULL;
+
     PipeExpression *pExpression = NULL;
-    yyscan_t pScanner;
-    YY_BUFFER_STATE pState;
+    int result = yyparse(&pExpression, pState->Scanner);
+    if (result == 0)
+        return pExpression;
+    return NULL;
+}
 
-    if (yylex_init(&pScanner)) {
-        /* could not initialize */
-        return;
-    }
-
-    pState = yy_scan_string(pLine, pScanner);
-
-    int result;
-    for (int i = 0; !(result = yyparse(&pExpression, pScanner)); i++) {
-        fprintf(stderr, "yyparse#%d returned %d\n", i, result);
-        PrintPipeExpression(pExpression, 0);
-        if (pExpression == NULL)
-            break;
-        DeletePipeExpression(pExpression);
-        pExpression = NULL;
-    }
-
-    yy_delete_buffer(pState, pScanner);
-
-    yylex_destroy(pScanner);
-    
-    return;
+void CleanupLexer(LexerState *pState)
+{
+    yy_delete_buffer(pState->State, pState->Scanner);
+    yylex_destroy(pState->Scanner);
 }
 
 static void printIndents(int count)
