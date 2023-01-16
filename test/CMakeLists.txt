@@ -3,8 +3,9 @@ enable_testing()
 # sources
 set(TEST_FILES
     main.c
-    parser.c
     strpls.c
+    parser.c
+    interpreter.c
 )
 
 add_executable(${TEST_NAME} ${TEST_FILES})
