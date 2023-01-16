@@ -179,8 +179,8 @@ char **process_word(CommandCtx* cctx, CommandWord *word, size_t *returnedCount, 
 
     char **pReturned = NULL;
     if (doGlob) {
-        glob_t globbuf;
-        glob(outbuf, GLOB_DOOFFS | GLOB_NOMAGIC, NULL, &globbuf);
+        glob_t globbuf = {};
+        glob(outbuf, GLOB_NOMAGIC, NULL, &globbuf);
         (*returnedCount) = globbuf.gl_pathc;
         char **pOriginal = globbuf.gl_pathv;
         pReturned = (char **)malloc(sizeof(char *) * (globbuf.gl_pathc + 1));
