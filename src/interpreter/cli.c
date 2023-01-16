@@ -5,17 +5,11 @@
 
 int CHILD_PID = -1;
 
-void handleInput(char* cwd, char* command) {
-    printf("command: %s \n", command);
-
-    PipeExpression *pResult = GetTree(command);
-    fprintf(stderr, "parsed\n");
-    PrintPipeExpression(pResult, 0);
-    DeletePipeExpression(pResult);
-
-    removeAllOccurences(command, '\n');
-    // TODO use parser
-    interpret(cwd, command, &CHILD_PID);
+void handleInput(Env* env, char* command) {
+    PipeExpression* expression = GetTree(command);
+    PrintPipeExpression(expression, 0);
+    interpret(expression, env);
+    DeletePipeExpression(expression);
 }
 
 void handleSignal(int signalNumber) {
@@ -30,9 +24,12 @@ void interface(const int isBatch, const char** argumentsValues) {
     sigaction(SIGQUIT, &sa, NULL);
 
     MemContext context = MakeContext();
-    char* cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
-    if (getcwd(cwd, COMMAND_SIZE) == NULL) {
+
+    Env env;
+    env.cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
+    env.childPid = &CHILD_PID;
+    if (getcwd(env.cwd, COMMAND_SIZE) == NULL) {
         exit(EXIT_FAILURE);
     }
 
@@ -41,15 +38,13 @@ void interface(const int isBatch, const char** argumentsValues) {
         while (fgets(command, COMMAND_SIZE, input) != NULL) {
             if (strlen(command) == 0)
                 continue;
-            handleInput(cwd,command);
+            handleInput(&env, command);
         }
     } else {
         while (strstr(command, "exit") != command) {
-            if (strlen(command) == 0)
-                continue;
             printf("> ");
             fgets(command, COMMAND_SIZE, stdin);
-            handleInput(cwd, command);
+            handleInput(&env, command);
         }
     }
     AutoExit(context);

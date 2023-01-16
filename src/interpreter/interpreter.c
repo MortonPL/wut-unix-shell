@@ -1,11 +1,12 @@
 #include "cli.h"
 
-#define COMMAND_SIZE 20
+#define COMMAND_SIZE 256
 #define FLAG_AMOUNT 2
 
+char stack[COMMAND_SIZE][COMMAND_SIZE] = {{0}};
 char previousWorkingDirectory[COMMAND_SIZE] = "~";
 
-void getFlags(char* flags, char** prompt) {
+void getFlags(char* flags, char prompt[COMMAND_SIZE][COMMAND_SIZE]) {
     unsigned long currentFlag = 0;
     while (*prompt != NULL && strstr(*prompt, "-") == *prompt && currentFlag < FLAG_AMOUNT) {
         char* flag = strsep(prompt, " ");
@@ -38,36 +39,37 @@ void printWorkingDirectory(const char* cwd) {
     printf("%s\n", cwd);
 }
 
-void print(const char* prompt, const char* flags) {
+void print(const char* flags) {
     // TODO handle variables
     if (strstr(flags, "e") != NULL) {
         // TODO implement
     }
-    if (strstr(flags, "n") != NULL) {
-        if (prompt != NULL)
-            printf("%s", prompt);
-    } else {
-        if (prompt != NULL)
-            printf("%s\n", prompt);
-        else
-            printf("\n");
+    int i = 1;
+    char* element = stack[i];
+    while (strcmp(element, "\0") != 0) {
+        printf("%s ", element);
+        i++;
+        element = stack[i];
+    }
+    if (strstr(flags, "n") == NULL) {
+        printf("\n");
     }
 }
 
-void interpret(char* cwd, char* prompt, int* childPid) {
+void handleCommand(int argumentCount, Env* env) {
     // TODO add "export"
-    char* command = strsep(&prompt, " ");
+    char* command = stack[0];
     if (strstr(command, "cd") == command) {
-        if (prompt != NULL) {
-            changeDirectory(cwd, prompt);
+        if (argumentCount > 1) {
+            changeDirectory(env->cwd, stack[1]);
         }
     } else if (strstr(command, "pwd") == command) {
-        printWorkingDirectory(cwd);
+        printWorkingDirectory(env->cwd);
     } else if (strstr(command, "echo") == command) {
         char flags[FLAG_AMOUNT + 1] = "--\0";
-        if (prompt != NULL)
-            getFlags(flags, &prompt);
-        print(prompt, flags);
+        // if (arguments != NULL)
+        //     getFlags(flags, &arguments);
+        print(flags);
     } else if (strstr(command, "exit") == command) {
         // handled in interface()
     } else {
@@ -75,18 +77,65 @@ void interpret(char* cwd, char* prompt, int* childPid) {
         char* path = getenv("PATH");
         char pathenv[strlen(path) + sizeof("PATH=")];
         char* envp[] = {pathenv, NULL};
-        char* args[] = {command, prompt, NULL};
 
         // TODO this forever steals stdout for some reason
-        int pid = attach_command(STDIN_FILENO, STDOUT_FILENO, NULL, command, args, envp);
+        int pid = attach_command(STDIN_FILENO, STDOUT_FILENO, NULL, command, stack, envp);
         if (pid < 0) {
             exit(pid);
         }
-        *childPid = pid;
+        *(env->childPid) = pid;
         int err = wait_for_child(pid);
         if (err < 0) {
             exit(err);
         }
-        *childPid = -1;
+        *(env->childPid) = -1;
     }
+}
+
+// CE_ASSIGNMENT,
+// CE_WORD,
+// CE_REDIRECTION_IN,
+// CE_REDIRECTION_OUT
+
+void handleCommandElement(CommandElement* element, int i) {
+    printf("%d\n", element->Type);
+    strcpy(stack[i], element->Value);
+}
+
+void handleCommandExpression(CommandExpression* expression, Env* env) {
+    if (expression->Elements == NULL) {
+        exit(EXIT_FAILURE);
+    } else {
+        for (int a=0; a<COMMAND_SIZE; a++) {
+            for (int b=0; b<COMMAND_SIZE; b++) {
+                stack[a][b] = 0;
+            }
+        }
+        CommandElement* element;
+        int i = 0;
+        while ((element = expression->Elements[i]) != NULL) {
+            handleCommandElement(expression->Elements[i], i);
+            i++;
+        }
+        // int size = 1; // TODO change to expressions->ElementsSize
+        // for(int i = 0; i < size; i++) {
+        //     handleCommandElement(expression->Elements[i]);
+        // }
+        handleCommand(i, env);
+    }
+}
+
+void handlePipeExpression(PipeExpression* expression, Env* env) {
+    if (expression->Left != NULL) {
+        handlePipeExpression(expression->Left, env);
+    }
+    if (expression->Right == NULL) {
+        exit(EXIT_FAILURE);
+    } else {
+        handleCommandExpression(expression->Right, env);
+    }
+}
+
+void interpret(PipeExpression* prompt, Env* env) {
+    handlePipeExpression(prompt, env);
 }

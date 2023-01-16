@@ -4,11 +4,19 @@
 #include <unistd.h>
 #include "../lib/strpls.h"
 #include "../pipes/pipes.h"
+#include "../parser/interface.h"
+#include "../parser/structures.h"
+#include "../lib/mmem.h"
 
-void changeDirectory(char* cwd, const char* path);
+typedef struct {
+    char* cwd;
+    int* childPid;
+} Env;
 
-void printWorkingDirectory(const char* cwd);
+// void changeDirectory(char* cwd, const char* path);
 
-void print(const char* prompt, const char* flags);
+// void printWorkingDirectory(const char* cwd);
 
-void interpret(char* cwd, char* prompt, int* childPid);
+// void print(const char* prompt, const char* flags);
+
+void interpret(PipeExpression* prompt, Env* env);
