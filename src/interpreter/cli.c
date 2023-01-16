@@ -29,6 +29,7 @@ void interface(const int isBatch, const char** argumentsValues) {
     Env env;
     env.cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     env.childPid = &CHILD_PID;
+    env.variableCount = 0;
     if (getcwd(env.cwd, COMMAND_SIZE) == NULL) {
         exit(EXIT_FAILURE);
     }

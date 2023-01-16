@@ -9,8 +9,15 @@
 #include "../lib/mmem.h"
 
 typedef struct {
+    char key[256];
+    char value[256];
+} MapEntry;
+
+typedef struct {
     char* cwd;
     int* childPid;
+    MapEntry variables[256];
+    int variableCount;
 } Env;
 
 // void changeDirectory(char* cwd, const char* path);
