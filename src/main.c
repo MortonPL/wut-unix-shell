@@ -96,5 +96,6 @@ int main(const int argumentsCount, char *argumentsValues[])
     interface(isBatch);
     AutoExit(GlobalMemContext);
 
+    drop_logger();
     return 0;
 }
