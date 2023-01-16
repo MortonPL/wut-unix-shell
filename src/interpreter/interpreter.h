@@ -9,8 +9,6 @@
 #include "../lib/mmem.h"
 
 typedef struct {
-    char* curr_wd;
-    char* prev_wd;
     int next_pipe_in;
 } ExecutionCtx;
 

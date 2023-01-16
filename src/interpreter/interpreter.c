@@ -43,10 +43,11 @@ int echo_cmd(const char *file, char* const* argv, char* const* envp) {
 /// @param fmt Format string
 /// @param s Array of strings
 void print_str_arr(char *fmt, char **s) {
-    while (*s != NULL) {
-        log_trace(fmt, *s);
-        s += 1;
-    }
+    if (s != NULL)
+        while (*s != NULL) {
+            log_trace(fmt, *s);
+            s += 1;
+        }
 }
 
 /// @brief Free array of strings
@@ -85,9 +86,9 @@ extern char **environ;
 /// @param args_count Args count
 /// @param eenv_count Eenv count
 void subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count) {
-    cctx->args = malloc(args_count + 1);
+    cctx->args = malloc((args_count + 1) * sizeof(char*));
     (cctx->args)[args_count] = NULL;
-    cctx->eenv = malloc(eenv_count + 1);
+    cctx->eenv = malloc((eenv_count + 1) * sizeof(char*));
     (cctx->eenv)[eenv_count] = NULL;
 }
 
@@ -165,6 +166,7 @@ char* process_word(CommandCtx* cctx, CommandWord *word) {
 void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
     size_t args_count = 0, eenv_count = 0;
     subprocess_args_eenv_counts(cmd_expr, &args_count, &eenv_count);
+    log_trace("Args: %i Eenv: %i", args_count, eenv_count);
     subprocess_allocate(cctx, args_count, eenv_count);
 
     size_t args_i = 0, eenv_i = 0;
@@ -218,7 +220,6 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     log_trace("=== Running command:");
     print_str_arr("Arg: %s", curr_cctx->args);
     print_str_arr("Env: %s", curr_cctx->eenv);
-    log_trace("===");
 
     int pipe_in, pipe_out;
 
@@ -251,6 +252,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         create_pipe_pair(&(ectx->next_pipe_in), &pipe_out);
         log_trace("Output piped to next process");
     }
+    log_trace("===");
 
     // Check existence of command
     char *cmd = curr_cctx->args[0];

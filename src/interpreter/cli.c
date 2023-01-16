@@ -31,9 +31,7 @@ void interface(const int isBatch, const char** argumentsValues) {
 
     // init Env
     ExecutionCtx ectx = {
-        .curr_wd = NULL,
         .next_pipe_in = -1,
-        .prev_wd = NULL,
     };
 
     // actual body
