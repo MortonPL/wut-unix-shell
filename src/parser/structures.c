@@ -3,172 +3,165 @@
 #include <string.h>
 #include "structures.h"
 
-static char *copyStringWithLength(const char *pSource, size_t srcLength, size_t destLength)
+
+static char *copyString(const char *pSource, size_t strLength)
 {
-    char *pCopy = (char *)malloc(destLength);
+    char *pCopy = (char *)malloc(strLength + 1);
     if (pCopy == NULL)
         return NULL;
-    memcpy(pCopy, pSource, srcLength);
+    memcpy(pCopy, pSource, strLength + 1);
     return pCopy;
 }
 
-static char *copyString(const char *pSource)
+static WordElement *createWordElement(WordElementType type, const char *pValue)
 {
-    size_t length = strlen(pSource) + 1;
-    return copyStringWithLength(pSource, length, length);
-}
-
-static char *concatStrings(const char *pBase, const char *pNext)
-{
-    size_t baseLength = strlen(pBase);
-    size_t nextLength = strlen(pNext);
-    char *pConcat = copyStringWithLength(pBase, baseLength + 1, baseLength + nextLength + 1);
-    if (pConcat == NULL)
+    if (pValue == NULL)
         return NULL;
-    memcpy(pConcat + baseLength, pNext, nextLength + 1);
-    return pConcat;
-}
 
-static char *concatStringsWithEqBetween(const char *pBase, const char *pNext)
-{
-    size_t baseLength = strlen(pBase);
-    size_t nextLength = strlen(pNext);
-    char *pConcat = copyStringWithLength(pBase, baseLength + 1, baseLength + nextLength + 2);
-    if (pConcat == NULL)
+    size_t valueLength = strlen(pValue);
+    char *pCopy = copyString(pValue, valueLength);
+    if (pCopy == NULL)
         return NULL;
-    pConcat[baseLength] = '=';
-    memcpy(pConcat + baseLength + 1, pNext, nextLength + 1);
-    return pConcat;
+
+    WordElement *pElement = (WordElement *)malloc(sizeof(WordElement));
+    if (pElement == NULL) {
+        free(pCopy);
+        return NULL;
+    }
+
+    WordElement typedElement = { type, pCopy, valueLength };
+    memcpy(pElement, &typedElement, sizeof(WordElement));
+    return pElement;
 }
 
-PipeExpression *CreatePipeExpression(PipeExpression *pLeft, CommandExpression *pRight)
+
+PipeExpression *CreatePipeExpression(CommandExpression *pFirst)
 {
     PipeExpression *pExpression = (PipeExpression *)malloc(sizeof(PipeExpression));
     if (pExpression == NULL)
         return NULL;
 
-    pExpression->Left = pLeft;
-    pExpression->Right = pRight;
+    pExpression->Commands = (CommandExpression **)malloc(sizeof(CommandExpression *) * 2);
+    if (pExpression->Commands == NULL) {
+        free(pExpression);
+        return NULL;
+    }
+
+    pExpression->Length = 1;
+    (pExpression->Commands)[0] = pFirst;
+    (pExpression->Commands)[1] = NULL;
     return pExpression;
 }
 
-static size_t getElementCount(CommandExpression *pExpression)
-{
-    size_t length = 0;
-    if (pExpression == NULL)
-        return length;
-
-    CommandElement **ptr = pExpression->Elements;
-    while (*ptr++ != NULL)
-        length++;
-    return length;
-}
-
-CommandExpression *CreateCommandExpression(CommandElement *pFirst)
+CommandExpression *CreateCommandExpression(CommandWord *pFirst)
 {
     CommandExpression *pExpression = (CommandExpression *)malloc(sizeof(CommandExpression));
     if (pExpression == NULL)
         return NULL;
 
-    pExpression->Elements = (CommandElement **)malloc(sizeof(CommandElement *) * 2);
-    if (pExpression->Elements == NULL) {
+    pExpression->Words = (CommandWord **)malloc(sizeof(CommandWord *) * 2);
+    if (pExpression->Words == NULL) {
         free(pExpression);
         return NULL;
     }
 
-    (pExpression->Elements)[0] = pFirst;
-    (pExpression->Elements)[1] = NULL;
+    pExpression->Length = 1;
+    (pExpression->Words)[0] = pFirst;
+    (pExpression->Words)[1] = NULL;
     return pExpression;
 }
 
-static CommandElement *createCommandElement(CommandElementType type)
+CommandWord *CreateCommandWord(WordElementType type, const char *pFirst)
 {
-    CommandElement *pElement = (CommandElement *)malloc(sizeof(CommandElement));
+    WordElement *pElement = createWordElement(type, pFirst);
     if (pElement == NULL)
         return NULL;
 
-    CommandElement typedElement = { type, NULL, NULL };
-    memcpy(pElement, &typedElement, sizeof(CommandElement));
-    return pElement;
+    CommandWord *pWord = (CommandWord *)malloc(sizeof(CommandWord));
+    if (pWord == NULL) {
+        DeleteWordElement(pElement);
+        return NULL;
+    }
+
+    pWord->Elements = (WordElement **)malloc(sizeof(WordElement *) * 2);
+    if (pWord->Elements == NULL) {
+        DeleteWordElement(pElement);
+        free(pWord);
+        return NULL;
+    }
+
+    pWord->Type = type == WE_VARIABLE_WRITE ? CW_ASSIGNMENT : CW_BASIC;
+    pWord->Length = 1;
+    (pWord->Elements)[0] = pElement;
+    (pWord->Elements)[1] = NULL;
+    return pWord;
 }
 
-CommandElement *CreateAssignment(const char *pString)
+
+bool AppendToPipeExpression(PipeExpression *pExpression, CommandExpression *pNext)
 {
-    if (pString == NULL)
-        return NULL;
+    if (pExpression == NULL || pNext == NULL || pExpression->Commands == NULL)
+        return false;
 
-    CommandElement *pElement = createCommandElement(CE_ASSIGNMENT);
-    if (pElement == NULL)
-        return NULL;
+    CommandExpression **pNewCommands = (CommandExpression **)realloc(pExpression->Commands, sizeof(CommandExpression *) * (pExpression->Length + 2));
+    if (pNewCommands == NULL)
+        return false;
 
-    char *pCopy = copyString(pString);
-    if (pCopy == NULL) {
-        free(pElement);
-        return NULL;
-    }
-
-    pElement->Name = pCopy;
-    return pElement;
+    pExpression->Commands = pNewCommands;
+    pExpression->Length++;
+    (pExpression->Commands)[pExpression->Length - 1] = pNext;
+    (pExpression->Commands)[pExpression->Length] = NULL;
+    return true;
 }
 
-CommandElement *CreateWord(const char *pString)
+bool AppendToCommandExpression(CommandExpression *pExpression, CommandWord *pNext)
 {
-    if (pString == NULL)
-        return NULL;
+    if (pExpression == NULL || pNext == NULL || pExpression->Words == NULL)
+        return false;
 
-    CommandElement *pElement = createCommandElement(CE_WORD);
-    if (pElement == NULL)
-        return NULL;
+    CommandWord **pNewWords = (CommandWord **)realloc(pExpression->Words, sizeof(CommandWord *) * (pExpression->Length + 2));
+    if (pNewWords == NULL)
+        return false;
 
-    char *pCopy = copyString(pString);
-    if (pCopy == NULL) {
-        free(pElement);
-        return NULL;
-    }
-
-    pElement->Value = pCopy;
-    return pElement;
+    pExpression->Words = pNewWords;
+    pExpression->Length++;
+    (pExpression->Words)[pExpression->Length - 1] = pNext;
+    (pExpression->Words)[pExpression->Length] = NULL;
+    return true;
 }
 
-CommandElement *ConvertToRedirection(bool isOut, CommandElement *pBase)
+bool AppendToCommandWord(CommandWord* pWord, WordElementType typeNext, const char *pNext)
 {
-    if (pBase == NULL)
-        return NULL;
+    if (pWord == NULL || pNext == NULL || pWord->Elements == NULL)
+        return false;
 
-    if (pBase->Type == CE_REDIRECTION_OUT && isOut)
-        return pBase;
-    if (pBase->Type == CE_REDIRECTION_IN && !isOut)
-        return pBase;
-
-    CommandElement *pElement = createCommandElement(isOut ? CE_REDIRECTION_OUT : CE_REDIRECTION_IN);
+    WordElement *pElement = createWordElement(typeNext, pNext);
     if (pElement == NULL)
-        return NULL;
+        return false;
 
-    if (pBase->Type == CE_WORD)
-    {
-        pElement->Name = pBase->Name;
-        pElement->Value = pBase->Value;
-        return pElement;
+    WordElement **pNewElements = (WordElement **)realloc(pWord->Elements, sizeof(WordElement *) * (pWord->Length + 2));
+    if (pNewElements == NULL) {
+        DeleteWordElement(pElement);
+        return false;
     }
 
-    char *pConcat = concatStringsWithEqBetween(pBase->Name, pBase->Value);
-    if (pConcat == NULL) {
-        free(pElement);
-        return NULL;
-    }
-
-    pElement->Value = pConcat;
-    DeleteCommandElement(pBase);
-    return pElement;
+    pWord->Elements = pNewElements;
+    pWord->Length++;
+    (pWord->Elements)[pWord->Length - 1] = pElement;
+    (pWord->Elements)[pWord->Length] = NULL;
+    return true;
 }
+
 
 void DeletePipeExpression(PipeExpression *pExpression)
 {
     if (pExpression == NULL)
         return;
 
-    DeletePipeExpression(pExpression->Left);
-    DeleteCommandExpression(pExpression->Right);
+    CommandExpression **ptr = pExpression->Commands;
+    while (*ptr != NULL)
+        DeleteCommandExpression(*ptr++);
+    free(pExpression->Commands);
 
     free(pExpression);
 }
@@ -178,57 +171,33 @@ void DeleteCommandExpression(CommandExpression *pExpression)
     if (pExpression == NULL)
         return;
 
-    CommandElement **ptr = pExpression->Elements;
+    CommandWord **ptr = pExpression->Words;
     while (*ptr != NULL)
-        free(*ptr++);
-    free(pExpression->Elements);
+        DeleteCommandWord(*ptr++);
+    free(pExpression->Words);
 
     free(pExpression);
 }
 
-void DeleteCommandElement(CommandElement *pElement)
+void DeleteCommandWord(CommandWord *pWord)
+{
+    if (pWord == NULL)
+        return;
+
+    WordElement **ptr = pWord->Elements;
+    while (*ptr != NULL)
+        DeleteWordElement(*ptr++);
+    free(pWord->Elements);
+
+    free(pWord);
+}
+
+void DeleteWordElement(WordElement *pElement)
 {
     if (pElement == NULL)
         return;
 
-    free(pElement->Name);
     free(pElement->Value);
 
     free(pElement);
-}
-
-bool AppendToCommandElement(CommandElement *pElements, const char *pString)
-{
-    if (pElements == NULL || pString == NULL)
-        return false;
-
-    if (pElements->Value == NULL)
-    {
-        pElements->Value = copyString(pString);
-        return true;
-    }
-
-    char *pOldValue = pElements->Value;
-    char *pNewValue = concatStrings(pElements->Value, pString);
-    if (pNewValue == NULL)
-        return false;
-    pElements->Value = pNewValue;
-    free(pOldValue);
-    return true;
-}
-
-bool AppendToCommandExpression(CommandExpression *pExpression, CommandElement *pElement)
-{
-    if (pExpression == NULL || pElement == NULL || pExpression->Elements == NULL)
-        return false;
-
-    size_t oldElementCount = getElementCount(pExpression);
-    CommandElement **pNewElements = (CommandElement **)realloc(pExpression->Elements, sizeof(CommandElement *) * (oldElementCount + 2));
-    if (pNewElements == NULL)
-        return NULL;
-
-    pExpression->Elements = pNewElements;
-    (pExpression->Elements)[oldElementCount] = pElement;
-    (pExpression->Elements)[oldElementCount + 1] = NULL;
-    return true;
 }

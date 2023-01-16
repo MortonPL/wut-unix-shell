@@ -1,41 +1,53 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 typedef enum {
-    CE_ASSIGNMENT,
-    CE_WORD,
-    CE_REDIRECTION_IN,
-    CE_REDIRECTION_OUT
-} CommandElementType;
+    WE_BASIC_STRING,
+    WE_ESCAPED_STRING,
+    WE_VARIABLE_READ,
+    WE_VARIABLE_WRITE
+} WordElementType;
 
 typedef struct {
-    const CommandElementType Type;
+    const WordElementType Type;
+    char * const Value;
+    const size_t Length;
+} WordElement;
 
-    char *Value;
-    char *Name;  // only if Type == CE_ASSIGNMENT
-} CommandElement;
+typedef enum {
+    CW_BASIC,
+    CW_ASSIGNMENT,
+    CW_REDIRECTION_IN,
+    CW_REDIRECTION_OUT
+} CommandWordType;
 
 typedef struct {
-    CommandElement **Elements;
+    CommandWordType Type;
+    WordElement **Elements;
+    size_t Length;
+} CommandWord;
+
+typedef struct {
+    CommandWord **Words;
+    size_t Length;
 } CommandExpression;
 
 typedef struct PipeExpression {
-    struct PipeExpression *Left;  // if empty, PipeExpression only wraps CommandExpression Right
-    CommandExpression *Right;
+    CommandExpression **Commands;
+    size_t Length;
 } PipeExpression;
 
-PipeExpression *CreatePipeExpression(PipeExpression *pLeft, CommandExpression *pRight);
-CommandExpression *CreateCommandExpression(CommandElement *pFirst);
+PipeExpression *CreatePipeExpression(CommandExpression *pFirst);
+CommandExpression *CreateCommandExpression(CommandWord *pFirst);
+CommandWord *CreateCommandWord(WordElementType type, const char *pFirst);
 
-CommandElement *CreateAssignment(const char *pFirst);  // copies pFirst
-CommandElement *CreateWord(const char *pFirst);  // copies pFirst
-CommandElement *ConvertToRedirection(bool isOut, CommandElement *pBase);  // frees pBase if pBase->Type == ASSIGNMENT, copies pointers otherwise
+bool AppendToPipeExpression(PipeExpression *pExpression, CommandExpression *pNext);
+bool AppendToCommandExpression(CommandExpression *pExpression, CommandWord *pNext);
+bool AppendToCommandWord(CommandWord* pWord, WordElementType typeNext, const char *pNext);
 
 void DeletePipeExpression(PipeExpression *pExpression);
 void DeleteCommandExpression(CommandExpression *pExpression);
-
-void DeleteCommandElement(CommandElement *pElement);
-
-bool AppendToCommandElement(CommandElement *pElements, const char *pString);  // copies pString
-bool AppendToCommandExpression(CommandExpression *pExpression, CommandElement *pElement);
+void DeleteCommandWord(CommandWord *pWord);
+void DeleteWordElement(WordElement *pElement);

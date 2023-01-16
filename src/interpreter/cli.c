@@ -6,10 +6,15 @@
 int CHILD_PID = -1;
 
 void handleInput(Env* env, char* command) {
-    PipeExpression* expression = GetTree(command);
-    PrintPipeExpression(expression, 0);
-    interpret(expression, env);
-    DeletePipeExpression(expression);
+    LexerState lexerState;
+    InitializeLexer(&lexerState, command);
+    PipeExpression *expression = ReadPipeExpression(&lexerState);
+    while (expression != NULL) {
+        PrintPipeExpression(expression, 0);
+        interpret(expression, env);
+        DeletePipeExpression(expression);
+        expression = ReadPipeExpression(&lexerState);
+    }
 }
 
 void handleSignal(int signalNumber) {

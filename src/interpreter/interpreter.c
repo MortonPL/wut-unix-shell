@@ -44,7 +44,6 @@ void printWorkingDirectory(const char* cwd) {
 }
 
 void print(const char* flags, unsigned skip) {
-    // TODO handle variables
     if (strstr(flags, "e") != NULL) {
         // TODO implement
     }
@@ -99,61 +98,81 @@ void handleCommand(int argumentCount, Env* env) {
     }
 }
 
-// CE_ASSIGNMENT,
-// CE_WORD,
-// CE_REDIRECTION_IN,
-// CE_REDIRECTION_OUT
+void mapget(Env* env, char* key) {
+    for (int i=0; i<env->variableCount; i++) {
+        if (strcmp(env->variables[i].key, key) == 0) {
+            strcpy(key, env->variables[i].value);
+            break;
+        }
+    }
+}
 
-int handleCommandElement(CommandElement* element, int i, Env* env) {
-    if (element->Type == 0) {
+void handleWordElements(WordElement** elements, size_t length, char* buffer, Env* env) {
+    size_t offset = 0;
+    for (size_t i=0; i<length; i++) {
+        if (elements[i]->Type == WE_BASIC_STRING) {
+            strcpy(buffer + offset, elements[i]->Value);
+            offset += strlen(elements[i]->Value);
+        } else if (elements[i]->Type == WE_ESCAPED_STRING) {
+            // TODO actually escape
+            strcpy(buffer + offset, elements[i]->Value);
+            offset += strlen(elements[i]->Value);
+        } else if (elements[i]->Type == WE_VARIABLE_READ) {
+            char varName[COMMAND_SIZE];
+            strcpy(varName, elements[i]->Value);
+            removeAllOccurences(varName, '$');
+            mapget(env, varName);
+            strcpy(buffer + offset, varName);
+            offset += strlen(varName);
+        }
+    }
+}
+
+int handleCommandWord(CommandWord* element, int stackIterator, Env* env) {
+    if (element->Type == CW_ASSIGNMENT) {
+        if (!(element->Length == 2 && element->Elements[0]->Type == WE_VARIABLE_WRITE)) {
+            exit(EXIT_FAILURE);
+        }
         MapEntry entry;
         for (int b=0; b<COMMAND_SIZE; b++) {
             entry.key[b] = 0;
             entry.value[b] = 0;
         }
-        strcpy(entry.key, element->Name);
+        strcpy(entry.key, element->Elements[0]->Value);
         removeAllOccurences(entry.key, '=');
-        strcpy(entry.value, element->Value);
+        // TODO handle WE_ESCAPED_STRING and WE_VARIABLE_READ
+        strcpy(entry.value, element->Elements[1]->Value);
         env->variables[env->variableCount++] = entry;
         return 0;
     } else {
-        strcpy(stack[i], element->Value);
+        // TODO handle redirections
+        char name[COMMAND_SIZE] = {0};
+        handleWordElements(element->Elements, element->Length, name, env);
+        strcpy(stack[stackIterator], name);
         return 1;
     }
 }
 
 void handleCommandExpression(CommandExpression* expression, Env* env) {
-    if (expression->Elements == NULL) {
-        exit(EXIT_FAILURE);
-    } else {
-        for (int a=0; a<COMMAND_SIZE; a++) {
-            for (int b=0; b<COMMAND_SIZE; b++) {
-                stack[a][b] = 0;
-            }
+    // zero stack
+    for (int a=0; a<COMMAND_SIZE; a++) {
+        for (int b=0; b<COMMAND_SIZE; b++) {
+            stack[a][b] = 0;
         }
-        CommandElement* element;
-        int i = 0, argumentCount = 0;
-        while ((element = expression->Elements[i]) != NULL) {
-            argumentCount = argumentCount + handleCommandElement(expression->Elements[i], i, env);
-            i++;
-        }
-        // int size = 1; // TODO change to expressions->ElementsSize
-        // for(int i = 0; i < size; i++) {
-        //     handleCommandElement(expression->Elements[i]);
-        // }
-        handleCommand(argumentCount, env);
     }
+    // actual body
+    int argumentCount = 0;
+    for(size_t i = 0; i < expression->Length; i++) {
+        argumentCount += handleCommandWord(expression->Words[i], argumentCount, env);
+    }
+    handleCommand(argumentCount, env);
 }
 
 void handlePipeExpression(PipeExpression* expression, Env* env) {
-    if (expression->Left != NULL) {
-        handlePipeExpression(expression->Left, env);
+    for (size_t i=0; i < expression->Length; i++) {
+        handleCommandExpression(expression->Commands[i], env);
     }
-    if (expression->Right == NULL) {
-        exit(EXIT_FAILURE);
-    } else {
-        handleCommandExpression(expression->Right, env);
-    }
+    // TODO actually pipe them
 }
 
 void interpret(PipeExpression* prompt, Env* env) {

@@ -992,13 +992,13 @@ YY_RULE_SETUP
 #line 30 "lexer.l"
 { yytext[strlen(yytext) - 1] = '\0';
                                     yylval->text = yytext + 1;
-                                    return STRING_PART; }
+                                    return ESCAPED_STRING_PART; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 35 "lexer.l"
 { yylval->text = yytext + 1;
-                                    return STRING_PART; }
+                                    return ESCAPED_STRING_PART; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
@@ -1014,8 +1014,8 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 44 "lexer.l"
-{ yylval->text = yytext + 1;
+#line 40 "lexer.l"
+{ yylval->text = yytext;
                                     return VARIABLE_READ; }
 	YY_BREAK
 case 11:
@@ -2331,9 +2331,10 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* EPILOGUE */
 
-int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage) {
-    fprintf(stderr, "Error: %s\n", pMessage);
+int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage)
+{
     (void)pExpression;
     (void)pScanner;
+    (void)pMessage;
     return 0;
 }
