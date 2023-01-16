@@ -6,9 +6,21 @@
 
 typedef struct {
     char stack[COMMAND_SIZE][COMMAND_SIZE];
-    char redirectIn[COMMAND_SIZE];
-    char redirectOut[COMMAND_SIZE];
+    int redirectIn;
+    int redirectOut;
 } CommandContext;
+
+/// returns found value in key
+void arrayget(char* const* env, char* key) {
+    char* variable;
+    size_t i = 0;
+    while (*env[i] != '\0') {
+        if ((variable = strstr(env[i], key)) != NULL) {
+            strcpy(key, env[i] + 1 + strlen(key));
+            break;
+        }
+    }
+}
 
 unsigned getFlags(char* flags, CommandContext* ctx) {
     unsigned long currentFlag = 0;
@@ -43,6 +55,12 @@ void changeDirectory(const char* path, Env* env) {
     }
 }
 
+void doPrintWorkingDirectory(const char *file, char* const* argv, char* const* envp) {
+    char cwd[COMMAND_SIZE] = "cwd";
+    arrayget(envp, cwd);
+    printf("%s\n", cwd);
+}
+
 void printWorkingDirectory(const char* cwd) {
     printf("%s\n", cwd);
 }
@@ -65,7 +83,7 @@ void print(const char* flags, unsigned skip, CommandContext* ctx) {
 
 void handleCommand(int argumentCount, CommandContext* ctx, Env* env) {
     // TODO add "export"
-    // TODO handle pipes and redirects
+    // TODO handle pipes (everywhere) and redirects (in build in)
     char* command = ctx->stack[0];
     if (strcmp(command, "") != 0) {
         if (strstr(command, "cd") == command) {
@@ -73,22 +91,7 @@ void handleCommand(int argumentCount, CommandContext* ctx, Env* env) {
                 changeDirectory(ctx->stack[1], env);
             }
         } else if (strstr(command, "pwd") == command) {
-            printWorkingDirectory(env->cwd);
-        } else if (strstr(command, "echo") == command) {
-            char flags[FLAG_AMOUNT + 1] = "--\0";
-            unsigned skip = 0;
-            if (argumentCount > 1)
-                skip = getFlags(flags, ctx);
-            print(flags, skip, ctx);
-        } else if (strstr(command, "exit") == command) {
-            // handled in interface()
-        } else {
-            char* path = getenv("PATH");
-            char pathenv[strlen(path) + sizeof("PATH=")];
-            char* envp[] = {pathenv, NULL};
-
-            // TODO this forever steals stdout for some reason
-            int pid = attach_command(STDIN_FILENO, STDOUT_FILENO, NULL, command, ctx->stack, envp);
+            int pid = attach_command(ctx->redirectIn, ctx->redirectOut, doPrintWorkingDirectory, command, ctx->stack, env->variables);
             if (pid < 0) {
                 exit(pid);
             }
@@ -98,15 +101,28 @@ void handleCommand(int argumentCount, CommandContext* ctx, Env* env) {
                 exit(err);
             }
             *(env->childPid) = -1;
-        }
-    }
-}
 
-void mapget(Env* env, char* key) {
-    for (int i=0; i<env->variableCount; i++) {
-        if (strcmp(env->variables[i].key, key) == 0) {
-            strcpy(key, env->variables[i].value);
-            break;
+            // printWorkingDirectory(env->cwd);
+        } else if (strstr(command, "echo") == command) {
+            char flags[FLAG_AMOUNT + 1] = "--\0";
+            unsigned skip = 0;
+            if (argumentCount > 1)
+                skip = getFlags(flags, ctx);
+            print(flags, skip, ctx);
+        } else if (strstr(command, "exit") == command) {
+            // handled in interface()
+        } else {
+            // TODO this forever steals stdout for some reason
+            int pid = attach_command(ctx->redirectIn, ctx->redirectOut, NULL, command, ctx->stack, env->variables);
+            if (pid < 0) {
+                exit(pid);
+            }
+            *(env->childPid) = pid;
+            int err = wait_for_child(pid);
+            if (err < 0) {
+                exit(err);
+            }
+            *(env->childPid) = -1;
         }
     }
 }
@@ -123,7 +139,7 @@ size_t handleWordElement(WordElement* element, char* buffer, Env* env) {
         char varName[COMMAND_SIZE];
         strcpy(varName, element->Value);
         removeAllOccurences(varName, '$');
-        mapget(env, varName);
+        arrayget(env, varName);
         strcpy(buffer, varName);
         return strlen(varName);
     }
@@ -142,25 +158,22 @@ int handleCommandWord(CommandWord* element, int stackIterator, CommandContext* c
         if (!(element->Length == 2 && element->Elements[0]->Type == WE_VARIABLE_WRITE)) {
             exit(EXIT_FAILURE);
         }
-        MapEntry entry;
-        for (int b=0; b<COMMAND_SIZE; b++) {
-            entry.key[b] = 0;
-            entry.value[b] = 0;
-        }
-        strcpy(entry.key, element->Elements[0]->Value);
-        removeAllOccurences(entry.key, '=');
-        handleWordElement(element->Elements[1], entry.value, env);
-        env->variables[env->variableCount++] = entry;
+        char value[256] = {0};
+        char temp[256] = {0};
+        strcpy(value, element->Elements[0]->Value);
+        handleWordElement(element->Elements[1], temp, env);
+        strcat(value, temp);
+        env->variables[env->variableCount++] = value;
         return 0;
     } else if (element->Type == CW_REDIRECTION_IN) {
         char name[COMMAND_SIZE] = {0};
         handleWordElements(element->Elements, element->Length, name, env);
-        strcpy(ctx->redirectIn, name);
+        ctx->redirectIn = file_in(name);
         return 0;
     } else if (element->Type == CW_REDIRECTION_OUT) {
         char name[COMMAND_SIZE] = {0};
         handleWordElements(element->Elements, element->Length, name, env);
-        strcpy(ctx->redirectOut, name);
+        ctx->redirectOut = file_out(name);
         return 0;
     } else {
         char name[COMMAND_SIZE] = {0};
@@ -177,9 +190,9 @@ void handleCommandExpression(CommandExpression* expression, Env* env) {
         for (int b=0; b<COMMAND_SIZE; b++) {
             ctx.stack[a][b] = 0;
         }
-        ctx.redirectIn[a] = 0;
-        ctx.redirectOut[a] = 0;
     }
+    ctx.redirectIn = STDIN_FILENO;
+    ctx.redirectOut = STDOUT_FILENO;
     // actual body
     int argumentCount = 0;
     for(size_t i = 0; i < expression->Length; i++) {

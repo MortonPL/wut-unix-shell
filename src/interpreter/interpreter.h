@@ -9,15 +9,10 @@
 #include "../lib/mmem.h"
 
 typedef struct {
-    char key[256];
-    char value[256];
-} MapEntry;
-
-typedef struct {
     char* cwd;
     char previousWorkingDirectory[256];
     int* childPid;
-    MapEntry variables[256];
+    char* variables[256];
     int variableCount;
 } Env;
 

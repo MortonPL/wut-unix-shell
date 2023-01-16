@@ -41,6 +41,15 @@ void interface(const int isBatch, const char** argumentsValues) {
     }
     strcpy(env.previousWorkingDirectory, env.cwd);
 
+    // add cwd to env var
+    char entry[256] = {0};
+    for (int b=0; b<COMMAND_SIZE; b++) {
+        entry[b] = 0;
+    }
+    strcpy(entry, "cwd=");
+    strcat(entry, env.cwd);
+    env.variables[env.variableCount++] = entry;
+
     // actual body
     if (isBatch) {
         FILE* input = fmemopen(argumentsValues[isBatch], strlen(argumentsValues[isBatch]), "r");
