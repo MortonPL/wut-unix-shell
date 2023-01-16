@@ -354,7 +354,6 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
                 break;
             case CW_BASIC:
                 cctx->args[args_i++] = process_word_basic(cctx, word);
-                args_i++;
                 break;
             case CW_REDIRECTION_IN:
                 if (cctx->redir_in != NULL) free(cctx->redir_in);
