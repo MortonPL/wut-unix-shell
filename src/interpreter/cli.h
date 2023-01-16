@@ -1,8 +1,9 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include "../lib/mmem.h"
-#include "../parser/parser.h"
+#include "../parser/interface.h"
 #include "interpreter.h"
 
-void interface(const int isBatch);
+void interface(const int isBatch, const char** argumentsValues);

@@ -1,6 +1,7 @@
 # MULTI-PURPOSE PROJECT SCRIPT
 # Init variables
 CONFIGURE=0;    # Configure CMake
+PARSER=0;      # Generate flex/bison
 TEST=0          # Run tests
 BUILD_TYPE="";  # CMake build type
 DIR="";         # Build output directory
@@ -18,6 +19,7 @@ print_help() {
     echo "    shelltest";
     echo "Options:";
     echo "    -c, --configure                      Force (re)generate CMake configuration files";
+    echo "    -p, --parser                         Force (re)generate flex and bison files";
     echo "    -h, --help                           Display this message";
     echo "    -t, --tests                          Run tests after build";
 }
@@ -31,10 +33,14 @@ parse_args() {
         case "${!arg_num}" in
         "-h" | "--help")
             print_help;
-            exit;
+            exit 0;
             ;;
         "-c" | "--configure")
             CONFIGURE=1;
+            ;;
+        "-p" | "--parser")
+            CONFIGURE=1;
+            PARSER=1;
             ;;
         "-t" | "--tests")
             TEST=1;
@@ -69,15 +75,15 @@ parse_args() {
         arg_num=$(($arg_num + 1));
     done
     if [ "$parse_mode" != "" ]; then
-        echo "Invalid arguments. One or more options are missing values.";
-        exit;
+        echo "Invalid arguments. One or more options are missing values." >&2;
+        exit 4;
     fi
 }
 
 do_config() {
     if [ $CONFIGURE -eq 1 ]; then
         echo "Force regenerating build configuration...";
-        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_TYPE;
+        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DGEN_PARSER=$PARSER;
         echo "Done.";
     fi
 }
@@ -93,8 +99,8 @@ do_build() {
     if [ $rc -eq 0 ]; then
         echo "Build finished.";
     else
-        echo "Build failed!!!";
-        exit;
+        echo "Build failed!!!" >&2;
+        exit 3;
     fi
 }
 
@@ -108,8 +114,8 @@ do_tests() {
         if [ $rc -eq 0 ]; then
             echo "Tests finished.";
         else
-            echo "Tests failed!!!";
-            exit;
+            echo "Tests failed!!!" >&2;
+            exit 2;
         fi
     else
         echo "Ignoring tests.";
@@ -119,7 +125,7 @@ do_tests() {
 # MAIN BODY STARTS HERE
 parse_args $@;
 if [ "$BUILD_TYPE" == "" ]; then
-    echo "Build type not specified, exiting. Use --help for help.";
+    echo "Build type not specified, exiting. Use --help for help." >&2;
     exit 1;
 fi
 

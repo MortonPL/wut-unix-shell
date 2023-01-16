@@ -1,0 +1,66 @@
+---
+Checks:          'readability-identifier-naming'
+WarningsAsErrors: ''
+CheckOptions:
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.StaticVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.LocalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.StaticConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalFunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.MemberCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.LocalPointerCase
+    value: CamelCase
+  - key: readability-identifier-naming.LocalPointerPrefix
+    value: p
+  - key: readability-identifier-naming.LocalPointerIgnoredRegexp
+    value: \w{1,3}
+  - key: readability-identifier-naming.LocalConstantPointerCase
+    value: CamelCase
+  - key: readability-identifier-naming.LocalConstantPointerPrefix
+    value: p
+  - key: readability-identifier-naming.LocalConstantPointerIgnoredRegexp
+    value: \w{1,3}
+  - key: readability-identifier-naming.GlobalPointerCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalPointerPrefix
+    value: p
+  - key: readability-identifier-naming.GlobalPointerIgnoredRegexp
+    value: \w{1,3}
+  - key: readability-identifier-naming.GlobalConstantPointerCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPointerPrefix
+    value: p
+  - key: readability-identifier-naming.GlobalConstantPointerIgnoredRegexp
+    value: \w{1,3}
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.PointerParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.PointerParameterPrefix
+    value: p
+  - key: readability-identifier-naming.PointerParameterIgnoredRegexp
+    value: \w{1,3}
+...
+

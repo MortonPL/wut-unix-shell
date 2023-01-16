@@ -1,25 +1,51 @@
 /* PROLOGUE */
 
 %{
-  #include <stdio.h>
+  #include "structures.h"
+  #include "parser.h"
+  #include "lexer.h"
 
-  int yylex(void);
-  void yyerror(char const *s);
+  // reference the implementation provided in lexer.l
+  int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessage);
 %}
+
+%code requires {
+  typedef void* yyscan_t;
+}
+
+%output  "parser.c"
+%defines "parser.h"
+
+%define      api.pure
+%lex-param   { yyscan_t scanner }
+%parse-param { PipeExpression **pExpression }
+%parse-param { yyscan_t scanner }
+
+%union {
+    int value;
+    char *text;
+    PipeExpression *pipe;
+    CommandExpression *command;
+    CommandElement *element;
+}
 
 
 /* DECLARATIONS */
 
-%define api.value.type {char*}
+%token<text> STRING_PART
+%token<text> VARIABLE_READ
+%token<text> VARIABLE_WRITE
+%token       WHITESPACES
 
-%token STRING_PART
-%token VARIABLE_READ
-%token WHITESPACES
-%token VARIABLE_WRITE
-
-%left OP_PIPE
+%left       OP_PIPE
 %precedence OP_PULL OP_PUSH
 %precedence OP_EXPR_END
+
+%type<pipe>    pipe_expression
+%type<command> command
+%type<element> argument_or_redirection
+%type<element> redirection
+%type<element> string
 
 
 /* GRAMMAR RULES */
@@ -27,78 +53,57 @@
 %%
 
 expressions:
-  expression expressions.trail.rep
-;
-
-expressions.trail.rep:
-  %empty
-| OP_EXPR_END expression expressions.trail.rep
-;
-
-expression:
   pipe_expression
+    { *pExpression = $1; }
+| expressions OP_EXPR_END whitespaces.opt pipe_expression.opt
 ;
 
 pipe_expression:
-  command pipe_expression.trail.rep
+  command whitespaces.opt
+    { $$ = CreatePipeExpression(NULL, $1); }
+| pipe_expression OP_PIPE whitespaces.opt command
+    { $$ = CreatePipeExpression($1, $4); }
 ;
 
-pipe_expression.trail.rep:
+pipe_expression.opt:
   %empty
-| OP_PIPE whitespaces.opt command pipe_expression.trail.rep
+| pipe_expression
 ;
 
 command:
-  assignment assignments_or_arguments.trail.rep
-| argument assignments_or_arguments.trail.rep
-;
-
-assignments_or_arguments.trail.rep:
-  %empty
-| WHITESPACES assignments_or_arguments.opt
-| redirection assignments_or_arguments.trail.rep
-;
-
-assignments_or_arguments.opt:
-  %empty
-| assignment_or_argument assignments_or_arguments.trail.rep
-;
-
-assignment_or_argument:
-  assignment
-| argument_or_redirection
-;
-
-assignment:
-  VARIABLE_WRITE string
+  argument_or_redirection
+    { $$ = CreateCommandExpression($1); }
+| command WHITESPACES argument_or_redirection
+    { $$ = $1; AppendToCommandExpression($$, $3); }
+| command redirection
+    { $$ = $1; AppendToCommandExpression($$, $2); }
 ;
 
 argument_or_redirection:
-  argument
-| redirection
-;
-
-argument:
   string
+| redirection
 ;
 
 redirection:
   OP_PULL whitespaces.opt string
+    { $$ = ConvertToRedirection(false, $3); }
 | OP_PUSH whitespaces.opt string
+    { $$ = ConvertToRedirection(true, $3); }
 ;
 
 string:
-  string_part string_part.rep
-;
-
-string_part.rep:
-  %empty
-| string_part string_part.rep
-;
-
-string_part:
   STRING_PART
+    { $$ = CreateWord($1); }
 | VARIABLE_READ
+    { $$ = CreateWord($1); }
+| VARIABLE_WRITE
+    { $$ = CreateAssignment($1); }
+| string STRING_PART
+    { $$ = $1; AppendToCommandElement($$, $2); }
+| string VARIABLE_READ
+    { $$ = $1; AppendToCommandElement($$, $2); }
+| string VARIABLE_WRITE
+    { $$ = $1; AppendToCommandElement($$, $2); }
 ;
 
 whitespaces.opt:
@@ -110,13 +115,3 @@ whitespaces.opt:
 
 
 /* EPILOGUE */
-
-int bisonMain(void)
-{
-  return yyparse();
-}
-
-void yyerror(char const *s)
-{
-  fprintf(stderr, "ERROR: %s\n", s);
-}
