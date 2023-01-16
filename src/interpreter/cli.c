@@ -32,23 +32,11 @@ void interface(const int isBatch, const char** argumentsValues) {
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
 
     // init Env
-    ExecutionCtx     env;
-    env.cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
-    env.childPid = &CHILD_PID;
-    env.variableCount = 0;
-    if (getcwd(env.cwd, COMMAND_SIZE) == NULL) {
-        exit(EXIT_FAILURE);
-    }
-    strcpy(env.previousWorkingDirectory, env.cwd);
-
-    // add cwd to env var
-    char entry[256] = {0};
-    for (int b=0; b<COMMAND_SIZE; b++) {
-        entry[b] = 0;
-    }
-    strcpy(entry, "cwd=");
-    strcat(entry, env.cwd);
-    env.variables[env.variableCount++] = entry;
+    ExecutionCtx ectx = {
+        .curr_wd = NULL,
+        .next_pipe_in = -1,
+        .prev_wd = NULL,
+    };
 
     // actual body
     if (isBatch) {
@@ -56,13 +44,13 @@ void interface(const int isBatch, const char** argumentsValues) {
         while (fgets(command, COMMAND_SIZE, input) != NULL) {
             if (strlen(command) == 0)
                 continue;
-            handleInput(&env, command);
+            handleInput(&ectx, command);
         }
     } else {
         while (strstr(command, "exit") != command) {
             printf("> ");
             fgets(command, COMMAND_SIZE, stdin);
-            handleInput(&env, command);
+            handleInput(&ectx, command);
         }
     }
     AutoExit(context);

@@ -9,11 +9,9 @@
 #include "../lib/mmem.h"
 
 typedef struct {
-    char* cwd;
-    char previousWorkingDirectory[256];
-    int* childPid;
-    char* variables[256];
-    int variableCount;
+    char* curr_wd;
+    char* prev_wd;
+    int next_pipe_in;
 } ExecutionCtx;
 
 typedef struct {
