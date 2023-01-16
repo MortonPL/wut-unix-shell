@@ -8,14 +8,6 @@ extern const char* Temp;
 /// @brief Path to /dev/null device
 extern const char* DevNull;
 
-/// @brief Opens read pipe on /dev/null
-/// @return Same as open()
-int devnull_in();
-
-/// @brief Opens write pipe on /dev/null
-/// @return Same as open()
-int devnull_out();
-
 /// @brief Opens a read descriptor on a file
 /// @return Same as open()
 int file_in(char* file);

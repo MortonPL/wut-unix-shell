@@ -17,14 +17,6 @@
 const char* Temp = "/tmp";
 const char* DevNull = "/dev/null";
 
-int devnull_in() {
-    return open(DevNull, O_WRONLY);
-}
-
-int devnull_out() {
-    return open(DevNull, O_WRONLY);
-}
-
 int file_in(char* file) {
     return open(file, O_RDONLY);
 }
@@ -114,6 +106,5 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
 
 int wait_for_child(pid_t pid) {
     int status;
-    waitpid(pid, &status, 0);
-    return status;
+    return unwrap(waitpid(pid, &status, 0));
 }

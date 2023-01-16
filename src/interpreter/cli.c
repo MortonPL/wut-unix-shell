@@ -5,7 +5,7 @@
 
 int CHILD_PID = -1;
 
-void handleInput(Env* env, char* command) {
+void handleInput(ExecutionCtx* env, char* command) {
     LexerState lexerState;
     InitializeLexer(&lexerState, command);
     PipeExpression *expression = ReadPipeExpression(&lexerState);
@@ -32,7 +32,7 @@ void interface(const int isBatch, const char** argumentsValues) {
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
 
     // init Env
-    Env env;
+    ExecutionCtx     env;
     env.cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
     env.childPid = &CHILD_PID;
     env.variableCount = 0;

@@ -14,7 +14,14 @@ typedef struct {
     int* childPid;
     char* variables[256];
     int variableCount;
-} Env;
+} ExecutionCtx;
+
+typedef struct {
+    char **args;
+    char **eenv;
+    char *redir_in;
+    char *redir_out;
+} CommandCtx;
 
 // void changeDirectory(char* cwd, const char* path);
 
@@ -22,4 +29,4 @@ typedef struct {
 
 // void print(const char* prompt, const char* flags);
 
-void interpret(PipeExpression* prompt, Env* env);
+void interpret(PipeExpression* prompt, ExecutionCtx* env);
