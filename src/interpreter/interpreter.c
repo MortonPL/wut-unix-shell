@@ -107,24 +107,29 @@ void mapget(Env* env, char* key) {
     }
 }
 
+size_t handleWordElement(WordElement* element, char* buffer, Env* env) {
+    if (element->Type == WE_BASIC_STRING) {
+        strcpy(buffer, element->Value);
+        return strlen(element->Value);
+    } else if (element->Type == WE_ESCAPED_STRING) {
+        // TODO actually escape
+        strcpy(buffer, element->Value);
+        return strlen(element->Value);
+    } else if (element->Type == WE_VARIABLE_READ) {
+        char varName[COMMAND_SIZE];
+        strcpy(varName, element->Value);
+        removeAllOccurences(varName, '$');
+        mapget(env, varName);
+        strcpy(buffer, varName);
+        return strlen(varName);
+    }
+    return 0;
+}
+
 void handleWordElements(WordElement** elements, size_t length, char* buffer, Env* env) {
     size_t offset = 0;
     for (size_t i=0; i<length; i++) {
-        if (elements[i]->Type == WE_BASIC_STRING) {
-            strcpy(buffer + offset, elements[i]->Value);
-            offset += strlen(elements[i]->Value);
-        } else if (elements[i]->Type == WE_ESCAPED_STRING) {
-            // TODO actually escape
-            strcpy(buffer + offset, elements[i]->Value);
-            offset += strlen(elements[i]->Value);
-        } else if (elements[i]->Type == WE_VARIABLE_READ) {
-            char varName[COMMAND_SIZE];
-            strcpy(varName, elements[i]->Value);
-            removeAllOccurences(varName, '$');
-            mapget(env, varName);
-            strcpy(buffer + offset, varName);
-            offset += strlen(varName);
-        }
+        offset += handleWordElement(elements[i], buffer+offset, env);
     }
 }
 
@@ -140,8 +145,7 @@ int handleCommandWord(CommandWord* element, int stackIterator, Env* env) {
         }
         strcpy(entry.key, element->Elements[0]->Value);
         removeAllOccurences(entry.key, '=');
-        // TODO handle WE_ESCAPED_STRING and WE_VARIABLE_READ
-        strcpy(entry.value, element->Elements[1]->Value);
+        handleWordElement(element->Elements[1], entry.value, env);
         env->variables[env->variableCount++] = entry;
         return 0;
     } else {
