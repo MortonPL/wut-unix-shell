@@ -1,4 +1,6 @@
 #include "cli.h"
+#include "../lib/logger.h"
+#include "../lib/log.c/src/log.h"
 
 #define COMMAND_SIZE 256
 #define FLAG_AMOUNT 2
@@ -50,9 +52,7 @@ void changeDirectory(const char* path, ExecutionCtx* env) {
             strcat(env->cwd, path);
         }
     }
-    if (chdir(env->cwd) < 0) {
-        exit(EXIT_FAILURE);
-    }
+    unwrap(chdir(env->cwd));
 }
 
 void pwd_cmd(const char *file, char* const* argv, char* const* envp) {
@@ -214,15 +214,26 @@ void handlePipeExpression(PipeExpression* expression, ExecutionCtx* env) {
 
 
 
+/// @brief Free array of strings
+/// @param s The array of strings
+void free_str_arr(char **s) {
+    while (*s != NULL) {
+        log_trace("ww3 %s", *s);
+        free(*s++);
+        log_trace("ww3");
+    }
+    log_trace("");
+}
+
 /// @brief Counts amount of args and eenv in a command
-/// @param cExpression Command expression to count from
+/// @param cmd_expr Command expression to count from
 /// @param args_count Pointer to args count
 /// @param eenv_count Pointer to eenv count
 void subprocess_args_eenv_counts(CommandExpression *cmd_expr, size_t *args_count, size_t *eenv_count) {
-    CommandWord **words = cmd_expr->Words;
-    while (*words != NULL) {
-        CommandWord *word = *words++;
-        switch (word->Type) {
+    CommandWord **cmd_words = cmd_expr->Words;
+    while (*cmd_words != NULL) {
+        CommandWord *cmd_word = *cmd_words++;
+        switch (cmd_word->Type) {
             case CW_ASSIGNMENT:
                 eenv_count++;
                 break;
@@ -235,33 +246,20 @@ void subprocess_args_eenv_counts(CommandExpression *cmd_expr, size_t *args_count
 
 extern char **environ;
 
-/// @brief Count amount of entries in environ
-/// @param environ_count Pointer to the environ count
-void subprocess_environ_count(size_t *environ_count) {
-    char **evar = environ;
-    while (*evar++ != NULL)
-        environ_count++;
-}
-
-/// @brief Allocate space for command context, copy environ
-/// @param ctx Command context
+/// @brief Allocate space for command context
+/// @param cctx Command context
 /// @param args_count Args count
 /// @param eenv_count Eenv count
-/// @param environ_count Environ count
-void subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count, size_t environ_count) {
+void subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count) {
+    log_trace("%i", args_count);
     cctx->args = malloc(args_count + 1);
-    cctx->args[args_count] = NULL;
-    cctx->eenv = malloc(eenv_count + environ_count + 1);
-    cctx->eenv[eenv_count + environ_count] = NULL;
-    memcpy(cctx->eenv + eenv_count, environ, environ_count * sizeof(char*));
-}
-
-/// @brief Process a single word element
-/// @param cctx Command context
-/// @param el Word element
-/// @return Processed word element
-char* process_word_element(CommandCtx* cctx, WordElement *el) {
-    
+    log_trace("%i", cctx->args);
+    (cctx->args)[args_count] = NULL;
+    log_trace("");
+    cctx->eenv = malloc(eenv_count +1);
+    log_trace("");
+    (cctx->eenv)[eenv_count] = NULL;
+    log_trace("");
 }
 
 /// @brief Process a single assignment word
@@ -269,6 +267,44 @@ char* process_word_element(CommandCtx* cctx, WordElement *el) {
 /// @param word Command word
 /// @return Processed word
 char* process_word_assignment(CommandCtx* cctx, CommandWord *word) {
+    size_t len = 0;
+    WordElement **els = word->Elements;
+    while (*els != NULL) {
+        len += (*els)->Length;
+        els += 1;
+    }
+    char *outbuf = malloc(len + 1);
+    outbuf[len] = 0;
+
+    size_t offset = 0;
+    els = word->Elements;
+    while (*els != NULL) {
+        memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
+        offset += (*els)->Length;
+        els += 1;
+    }
+
+    return outbuf;
+}
+
+char* env_get(char **env, char *key) {
+    char **env_iter = env;
+    log_trace("%i", env);
+    while (*env_iter != NULL) {
+        log_trace("env iter");
+        if (strncmp(key, env_iter, strlen(key)) == 0)
+            return env_iter;
+        env_iter++;
+    }
+    log_trace("");
+    env_iter = environ;
+    while (*env_iter != NULL) {
+        log_trace("environ iter");
+        if (strncmp(key, env_iter, strlen(key)) == 0)
+            return env_iter;
+        env_iter++;
+    }
+    log_trace("");
     return "";
 }
 
@@ -277,7 +313,47 @@ char* process_word_assignment(CommandCtx* cctx, CommandWord *word) {
 /// @param word Command word
 /// @return Processed word
 char* process_word_basic(CommandCtx* cctx, CommandWord *word) {
+    log_trace("");
+    size_t len = 0;
+    WordElement **els = word->Elements;
+    while (*els != NULL) {
+        log_trace("ww1");
+        if ((*els)->Type == WE_VARIABLE_READ)
+            len += (*els)->Length - 1;
+        else
+            len += (*els)->Length;
+        els += 1;
+    }
+    log_trace("");
+    char *outbuf = malloc(len + 1);
+    outbuf[len] = 0;
+    log_trace("");
+    size_t offset = 0;
+    els = word->Elements;
+    log_trace("");
+    while (*els != NULL) {
+        log_trace("ww2");
+        if ((*els)->Type == WE_VARIABLE_READ) {
+            log_trace("");
+            char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
+            log_trace("");
+            size_t var_len = strlen(env_var);
+            log_trace("");
+            memcpy(&outbuf[offset], env_var, var_len);
+            log_trace("");
+            offset += var_len;
+        }
+        else {
+            log_trace("");
+            memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
+            offset += (*els)->Length;
+        }
+        
+        els += 1;
+    }
+    log_trace("");
 
+    return outbuf;
 }
 
 /// @brief Process a single redirect in word
@@ -285,7 +361,24 @@ char* process_word_basic(CommandCtx* cctx, CommandWord *word) {
 /// @param word Command word
 /// @return Processed word
 char* process_word_redir_in(CommandCtx* cctx, CommandWord *word) {
-    return "";
+    size_t len = 0;
+    WordElement **els = word->Elements;
+    while (*els != NULL) {
+        len += (*els)->Length;
+        els += 1;
+    }
+    char *outbuf = malloc(len + 1);
+    outbuf[len] = 0;
+
+    size_t offset = 0;
+    els = word->Elements;
+    while (*els != NULL) {
+        memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
+        offset += (*els)->Length;
+        els += 1;
+    }
+
+    return outbuf;
 }
 
 /// @brief Process a single redirect out word
@@ -293,22 +386,43 @@ char* process_word_redir_in(CommandCtx* cctx, CommandWord *word) {
 /// @param word Command word
 /// @return Processed word
 char* process_word_redir_out(CommandCtx* cctx, CommandWord *word) {
-    return "";
+    size_t len = 0;
+    WordElement **els = word->Elements;
+    while (*els != NULL) {
+        len += (*els)->Length;
+        els += 1;
+    }
+    char *outbuf = malloc(len + 1);
+    outbuf[len] = 0;
+
+    size_t offset = 0;
+    els = word->Elements;
+    while (*els != NULL) {
+        memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
+        offset += (*els)->Length;
+        els += 1;
+    }
+
+    return outbuf;
 }
 
 /// @brief Fill command ctx with information from command expression
-/// @param ctx Context to fill
-/// @param cExpression Command expression to consume
+/// @param cctx Context to fill
+/// @param cmd_expr Command expression to consume
 void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
-    size_t args_count, eenv_count, environ_count;
+    size_t args_count = 0, eenv_count = 0;
+    log_trace("");
     subprocess_args_eenv_counts(cmd_expr, &args_count, &eenv_count);
-    subprocess_environ_count(&environ_count);
-    subprocess_allocate(cctx, args_count, eenv_count, environ_count);
+    log_trace("");
+    subprocess_allocate(cctx, args_count, eenv_count);
+    log_trace("");
 
-    size_t args_i, eenv_i;
+    size_t args_i = 0, eenv_i = 0;
     CommandWord **words = cmd_expr->Words;
     while (*words != NULL) {
+        log_trace("w1");
         CommandWord *word = *words++;
+        log_trace("w2");
         switch (word->Type) {
             case CW_ASSIGNMENT:
                 cctx->eenv[eenv_i++] = process_word_assignment(cctx, word);
@@ -326,56 +440,87 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
                 cctx->redir_out = process_word_redir_out(cctx, word);
                 break;
         }
+        log_trace("w3");
+        DeleteCommandWord(word);
     }
-}
-
-/// @brief Free array of strings
-/// @param s The array of strings
-void free_str_arr(char **s) {
-    while (*s != NULL)
-        free(*s++);
+    free(cmd_expr);
 }
 
 /// @brief Free command ctx struct
-/// @param ctx Pointer to the struct
+/// @param cctx Pointer to the struct
 void free_command(CommandCtx* cctx) {
+    log_trace("");
     if (cctx == NULL) return;
-    if (cctx->args != NULL) free_str_arr(cctx->args);
-    if (cctx->eenv != NULL) free_str_arr(cctx->eenv);
-    if (cctx->redir_in != NULL) free(cctx->redir_in);
-    if (cctx->redir_out != NULL) free(cctx->redir_out);
-    free(cctx);
+    log_trace("");
+    if (cctx->args != NULL) {
+        free_str_arr(cctx->args);
+        cctx->args = NULL;
+    }
+    log_trace("");
+    if (cctx->eenv != NULL) {
+        free_str_arr(cctx->eenv);
+        cctx->eenv = NULL;
+    }
+    log_trace("");
+    if (cctx->redir_in != NULL) {
+        free(cctx->redir_in);
+        cctx->redir_in = NULL;
+    }
+    log_trace("");
+    if (cctx->redir_out != NULL) {
+        free(cctx->redir_out);
+        cctx->redir_out = NULL;
+    }
+    log_trace("");
 }
 
 int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx) {
-
+    log_trace("");
+    attach_command(STDIN_FILENO, STDOUT_FILENO, echo_cmd, "", curr_cctx->args, curr_cctx->eenv);
+    log_trace("");
 }
 
 /// @brief Perform a single iteration for command processing
-/// @param i_ptr Command expression hyper pointer
-/// @param cmd Command to fill
+/// @param cmd_expr Command expression hyper pointer
+/// @param cctx Command to fill
 /// @return Pointer to the same command
 CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx) {
+    log_trace("");
     process_command(cctx, **cmd_expr);
+    log_trace("");
     **cmd_expr = NULL;
     *cmd_expr += 1;
     return cctx;
 }
 
 /// @brief Interpret a pipe expression
-/// @param pExpression The pipe expression
-/// @param env Execution context
+/// @param pipe_expr The pipe expression
+/// @param ectx Execution context
 void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
-    CommandCtx cmd1, cmd2;
+    CommandCtx cmd1 = {
+        .args = NULL,
+        .eenv = NULL,
+        .redir_in = NULL,
+        .redir_out = NULL,
+    };
+    CommandCtx cmd2 = {
+        .args = NULL,
+        .eenv = NULL,
+        .redir_in = NULL,
+        .redir_out = NULL,
+    };
     CommandCtx *cctxs[2] = { NULL, NULL };
 
+    log_trace("");
     CommandExpression **cmd_expr = pipe_expr->Commands;
     if (*cmd_expr != NULL)
         cctxs[0] = iter_process_command(&cmd_expr, &cmd1);
 
+    log_trace("");
     if (*cmd_expr != NULL)
         cctxs[1] = iter_process_command(&cmd_expr, &cmd2);
 
+    log_trace("");
     run_command(ectx, cctxs[0], cctxs[1]);
 
     while (cctxs[1] != NULL) {

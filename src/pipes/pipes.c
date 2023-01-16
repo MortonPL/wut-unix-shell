@@ -87,7 +87,7 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
     // Ensure provided pipes are inherited
     if (pipe_in != STDIN_FILENO) 
         unwrap(fcntl(pipe_in, F_SETFD, 0));
-    if (pipe_in != STDOUT_FILENO)
+    if (pipe_out != STDOUT_FILENO)
         unwrap(fcntl(pipe_out, F_SETFD, 0));
     
     // Run internal setup
@@ -98,7 +98,7 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
     // Close pipes so they don't get inherited later
     if (pipe_in != STDIN_FILENO)
         unwrap(close(pipe_in));
-    if (pipe_in != STDOUT_FILENO)
+    if (pipe_out != STDOUT_FILENO)
         unwrap(close(pipe_out));
     
     return pid;

@@ -21,7 +21,5 @@ target_include_directories(${EXE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src/lib")
 target_link_libraries(${EXE_NAME} PRIVATE ${LIB_NAME})
 
 if(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    target_compile_definitions(${LIB_NAME} PRIVATE DEBUG=1)
-else()
-    target_compile_definitions(${LIB_NAME} PRIVATE DEBUG=0)
+    target_compile_definitions(${LIB_NAME} PUBLIC DEBUG)
 endif()
