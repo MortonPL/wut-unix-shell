@@ -18,10 +18,12 @@ const char* Temp = "/tmp";
 const char* DevNull = "/dev/null";
 
 int file_in(char* file) {
+    log_info("In file: '%s'", file);
     return open(file, O_RDONLY);
 }
 
 int file_out(char* file) {
+    log_info("Out file: '%s'", file);
     return open(file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 

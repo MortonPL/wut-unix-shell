@@ -55,10 +55,27 @@ unsigned getFlags(char* flags, CommandContext* ctx) {
 //     unwrap(chdir(env->cwd));
 // }
 
+int cd_cmd(const char *file, char* const* argv, char* const* envp) {
+
+}
+
 int pwd_cmd(const char *file, char* const* argv, char* const* envp) {
-    char cwd[COMMAND_SIZE] = "cwd";
-    arrayget(envp, cwd);
-    printf("%s\n", cwd);
+    size_t size;
+    long path_max = pathconf(".", _PC_PATH_MAX);
+    if (path_max == -1)
+        size = 1024;
+    else if (path_max > 10240)
+        size = 10240;
+    else
+        size = path_max;
+
+    char *buf = malloc(size);
+
+    char *res = getcwd(buf, size);
+    if (res != buf)
+        panic(OsErrorMessage, strerror(errno));
+
+    free(buf);
     return 0;
 }
 
@@ -94,9 +111,9 @@ void print(const char* flags, unsigned skip, CommandContext* ctx) {
 
 
 
-void print_str_arr(char **s) {
+void print_str_arr(char *fmt, char **s) {
     while (*s != NULL) {
-        log_trace("%s", *s);
+        log_trace(fmt, *s);
         s += 1;
     }
 }
@@ -410,22 +427,39 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
 
     int pipe_in, pipe_out;
 
-    if (ectx->next_pipe_in > 0)
+    log_trace("");
+    if (ectx->next_pipe_in > 0) {
+        log_trace("");
         pipe_in = ectx->next_pipe_in;
-    else if (curr_cctx->redir_in != NULL)
-        pipe_in = file_in(curr_cctx->redir_in);
-    else
-        pipe_in = file_in(DevNull);
-    
-    if (curr_cctx->redir_out != NULL) {
-        pipe_out = file_out(next_cctx->redir_out);
-        ectx->next_pipe_in = -1;
-    } else if (next_cctx == NULL) {
-        pipe_out = STDOUT_FILENO;
-        ectx->next_pipe_in = -1;
+        log_trace("");
+    }
+    else if (curr_cctx->redir_in != NULL) {
+        log_trace("");
+        pipe_in = unwrap(file_in(curr_cctx->redir_in));
+        log_trace("");
     }
     else {
+        log_trace("");
+        pipe_in = STDIN_FILENO;
+        log_trace("");
+    }
+    
+    if (curr_cctx->redir_out != NULL) {
+        pipe_out = unwrap(file_out(curr_cctx->redir_out));
+        log_trace("");
+        ectx->next_pipe_in = -1;
+        log_trace("");
+    } else if (next_cctx == NULL) {
+        log_trace("");
+        pipe_out = STDOUT_FILENO;
+        log_trace("");
+        ectx->next_pipe_in = -1;
+        log_trace("");
+    }
+    else {
+        log_trace("");
         create_pipe_pair(&(ectx->next_pipe_in), &pipe_out);
+        log_trace("");
     }
 
     char *file = curr_cctx->args[0];
@@ -435,12 +469,15 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     }
 
     if (strcmp(file, "echo") == 0) {
+        log_info("Running internal command '%s'", file);
         attach_command(pipe_in, pipe_out, echo_cmd, file, curr_cctx->args, curr_cctx->eenv);
     }
     else if (strcmp(file, "cd") == 0) {
+        log_info("Running internal command '%s'", file);
         attach_command(pipe_in, pipe_out, NULL, file, curr_cctx->args, curr_cctx->eenv);
     }
     else if (strcmp(file, "pwd") == 0) {
+        log_info("Running internal command '%s'", file);
         attach_command(pipe_in, pipe_out, pwd_cmd, file, curr_cctx->args, curr_cctx->eenv);
     }
     else if (strcmp(file, "echo") == 0) {
@@ -450,6 +487,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         
     }
     else {
+        log_info("Running external command '%s'", file);
         attach_command(pipe_in, pipe_out, echo_cmd, file, curr_cctx->args, curr_cctx->eenv);
     }
 
@@ -468,12 +506,12 @@ CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx
     **cmd_expr = NULL;
     *cmd_expr += 1;
 
-    log_trace("====");
-    print_str_arr(cctx->args);
-    print_str_arr(cctx->eenv);
-    log_trace("%s", cctx->redir_in);
-    log_trace("%s", cctx->redir_out);
-    log_trace("====");
+    log_trace("=== Running command:");
+    print_str_arr("Arg: %s", cctx->args);
+    print_str_arr("Env: %s", cctx->eenv);
+    if (cctx->redir_in != NULL) log_trace("In: %s", cctx->redir_in);
+    if (cctx->redir_out != NULL) log_trace("Out: %s", cctx->redir_out);
+    log_trace("===");
 
     return cctx;
 }
