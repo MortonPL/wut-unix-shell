@@ -2,115 +2,46 @@
 #include "../lib/logger.h"
 #include "../lib/log.c/src/log.h"
 
-#define COMMAND_SIZE 256
-#define FLAG_AMOUNT 2
-
-
-typedef struct {
-    char stack[COMMAND_SIZE][COMMAND_SIZE];
-    int redirectIn;
-    int redirectOut;
-} CommandContext;
-
-/// returns found value in key
-void arrayget(char* const* env, char* key) {
-    char* variable;
-    size_t i = 0;
-    while (*env[i] != '\0') {
-        if ((variable = strstr(env[i], key)) != NULL) {
-            strcpy(key, env[i] + 1 + strlen(key));
-            break;
-        }
-    }
-}
-
-unsigned getFlags(char* flags, CommandContext* ctx) {
-    unsigned long currentFlag = 0;
-    unsigned i = 1;
-    while (*(ctx->stack[i]) != '\0' && *(ctx->stack[i]) == '-' && currentFlag < FLAG_AMOUNT) {
-        char flag[COMMAND_SIZE];
-        strcpy(flag, ctx->stack[i]);
-        removeAllOccurences(flag, '-');
-        strcpy(&flags[currentFlag], flag);
-        currentFlag += strlen(flag);
-        i++;
-    }
-    return i - 1;
-}
-
-// void changeDirectory(const char* path, ExecutionCtx* env) {
-//     if (strstr(path, "-") == path) {
-//         strswp(env->cwd, env->previousWorkingDirectory);
-//     } else {
-//         strcpy(env->previousWorkingDirectory, env->cwd);
-//         if (strstr(path, "..") == path) {
-//             removeAllAfter(env->cwd, '/');
-//         } else if (strstr(path, "/") == path) {
-//             strcpy(env->cwd, path);
-//         } else {
-//             strcat(env->cwd, "/");
-//             strcat(env->cwd, path);
-//         }
-//     }
-//     unwrap(chdir(env->cwd));
-// }
-
 int cd_cmd(const char *file, char* const* argv, char* const* envp) {
+    argv++;
+    if (*argv == NULL)
+        panic("missing required argument");
 
+    char *new_dir = *argv;
+
+    argv++;
+    if (*argv != NULL)
+        panic("too many arguments");
+
+    unwrap(chdir(new_dir));
 }
+
+#define MAX_PATH 1024
 
 int pwd_cmd(const char *file, char* const* argv, char* const* envp) {
-    size_t size;
-    long path_max = pathconf(".", _PC_PATH_MAX);
-    if (path_max == -1)
-        size = 1024;
-    else if (path_max > 10240)
-        size = 10240;
-    else
-        size = path_max;
+    char buf[MAX_PATH];
 
-    char *buf = malloc(size);
-
-    char *res = getcwd(buf, size);
+    char *res = getcwd(buf, MAX_PATH);
     if (res != buf)
         panic(OsErrorMessage, strerror(errno));
 
-    free(buf);
+    printf("%s\n", buf);
     return 0;
 }
 
 int echo_cmd(const char *file, char* const* argv, char* const* envp) {
-    if (*argv != NULL) {
-        argv += 1;
-        while (*argv != NULL) {
-            printf("%s ", *argv);
-            argv++;
-        }
+    argv++;
+    while (*argv != NULL) {
+        printf("%s ", *argv);
+        argv++;
     }
     printf("\n");
     return 0;
 }
 
-void print(const char* flags, unsigned skip, CommandContext* ctx) {
-    if (strstr(flags, "e") != NULL) {
-        // TODO implement
-    }
-    unsigned i = 1 + skip;
-    char* element = ctx->stack[i];
-    while (strcmp(element, "\0") != 0) {
-        printf("%s ", element);
-        i++;
-        element = ctx->stack[i];
-    }
-    if (strstr(flags, "n") == NULL) {
-        printf("\n");
-    }
-}
-
-
-
-
-
+/// @brief Print array of strings
+/// @param fmt Format string
+/// @param s Array of strings
 void print_str_arr(char *fmt, char **s) {
     while (*s != NULL) {
         log_trace(fmt, *s);
@@ -119,7 +50,7 @@ void print_str_arr(char *fmt, char **s) {
 }
 
 /// @brief Free array of strings
-/// @param s The array of strings
+/// @param s Array of strings
 void free_str_arr(char **s) {
     if (s != NULL)
         while (*s != NULL) {
@@ -157,17 +88,16 @@ extern char **environ;
 /// @param args_count Args count
 /// @param eenv_count Eenv count
 void subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count) {
-    log_trace("%i", args_count);
     cctx->args = malloc(args_count + 1);
-    log_trace("%i", cctx->args);
     (cctx->args)[args_count] = NULL;
-    log_trace("");
     cctx->eenv = malloc(eenv_count + 1);
-    log_trace("");
     (cctx->eenv)[eenv_count] = NULL;
-    log_trace("");
 }
 
+/// @brief Returns the value of a key in environment
+/// @param env Command local environment
+/// @param key Key to look for
+/// @return The value
 char* env_get(char **env, char *key) {
     size_t len = strlen(key);
     char **env_iter = env;
@@ -196,152 +126,45 @@ char* env_get(char **env, char *key) {
     return NULL;
 }
 
-/// @brief Process a single assignment word
-/// @param cctx Command context
-/// @param word Command word
-/// @return Processed word
-char* process_word_assignment(CommandCtx* cctx, CommandWord *word) {
-    log_trace("");
-    size_t len = 0;
-    WordElement **els = word->Elements;
-    while (*els != NULL) {
-        log_trace("ww1");
-        if ((*els)->Type == WE_VARIABLE_READ)
-            len += (*els)->Length - 1;
-        else
-            len += (*els)->Length;
-        els += 1;
-    }
-    log_trace("");
-    char *outbuf = malloc(len + 1);
-    outbuf[len] = 0;
-    log_trace("");
-    size_t offset = 0;
-    els = word->Elements;
-    log_trace("");
-    while (*els != NULL) {
-        log_trace("ww2");
-        if ((*els)->Type == WE_VARIABLE_READ) {
-            log_trace("");
-            char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
-            log_trace("");
-            if (env_var != NULL) {
-                size_t var_len = strlen(env_var);
-                log_trace("");
-                memcpy(&outbuf[offset], env_var, var_len);
-                log_trace("");
-                offset += var_len;
-                //printf("%s\n", env_var);
-            }
-        } else {
-            log_trace("");
-            memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
-            offset += (*els)->Length;
-            //printf("%s\n", (*els)->Value);
-        }
-
-        els += 1;
-    }
-    log_trace("");
-
-    return outbuf;
-}
-
 /// @brief Process a single basic word
 /// @param cctx Command context
 /// @param word Command word
 /// @return Processed word
-char* process_word_basic(CommandCtx* cctx, CommandWord *word) {
-    log_trace("");
+char* process_word(CommandCtx* cctx, CommandWord *word) {
+    // Find length
     size_t len = 0;
     WordElement **els = word->Elements;
     while (*els != NULL) {
-        log_trace("ww1");
-        if ((*els)->Type == WE_VARIABLE_READ)
-            len += (*els)->Length - 1;
+        if ((*els)->Type == WE_VARIABLE_READ) {
+            char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
+            if (env_var != NULL) {
+                size_t var_len = strlen(env_var);
+                len += var_len;
+            }
+        }
         else
             len += (*els)->Length;
         els += 1;
     }
-    log_trace("");
+
+    // Fill
     char *outbuf = malloc(len + 1);
     outbuf[len] = 0;
-    log_trace("");
     size_t offset = 0;
     els = word->Elements;
-    log_trace("");
     while (*els != NULL) {
-        log_trace("ww2");
         if ((*els)->Type == WE_VARIABLE_READ) {
-            log_trace("");
             char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
-            log_trace("");
             if (env_var != NULL) {
                 size_t var_len = strlen(env_var);
-                log_trace("");
                 memcpy(&outbuf[offset], env_var, var_len);
-                log_trace("");
                 offset += var_len;
-                //printf("%s\n", env_var);
             }
         } else {
-            log_trace("");
             memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
             offset += (*els)->Length;
-            //printf("%s\n", (*els)->Value);
         }
 
-        els += 1;
-    }
-    log_trace("");
-
-    return outbuf;
-}
-
-/// @brief Process a single redirect in word
-/// @param cctx Command context
-/// @param word Command word
-/// @return Processed word
-char* process_word_redir_in(CommandCtx* cctx, CommandWord *word) {
-    size_t len = 0;
-    WordElement **els = word->Elements;
-    while (*els != NULL) {
-        len += (*els)->Length;
-        els += 1;
-    }
-    char *outbuf = malloc(len + 1);
-    outbuf[len] = 0;
-
-    size_t offset = 0;
-    els = word->Elements;
-    while (*els != NULL) {
-        memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
-        offset += (*els)->Length;
-        els += 1;
-    }
-
-    return outbuf;
-}
-
-/// @brief Process a single redirect out word
-/// @param cctx Command context
-/// @param word Command word
-/// @return Processed word
-char* process_word_redir_out(CommandCtx* cctx, CommandWord *word) {
-    size_t len = 0;
-    WordElement **els = word->Elements;
-    while (*els != NULL) {
-        len += (*els)->Length;
-        els += 1;
-    }
-    char *outbuf = malloc(len + 1);
-    outbuf[len] = 0;
-
-    size_t offset = 0;
-    els = word->Elements;
-    while (*els != NULL) {
-        memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
-        offset += (*els)->Length;
         els += 1;
     }
 
@@ -353,145 +176,121 @@ char* process_word_redir_out(CommandCtx* cctx, CommandWord *word) {
 /// @param cmd_expr Command expression to consume
 void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
     size_t args_count = 0, eenv_count = 0;
-    log_trace("");
     subprocess_args_eenv_counts(cmd_expr, &args_count, &eenv_count);
-    log_trace("");
     subprocess_allocate(cctx, args_count, eenv_count);
-    log_trace("Initialized command with %i args and %i envs", args_count, eenv_count);
 
     size_t args_i = 0, eenv_i = 0;
     CommandWord **words = cmd_expr->Words;
     while (*words != NULL) {
-        log_trace("w1");
         CommandWord *word = *words++;
-        log_trace("w2");
         switch (word->Type) {
             case CW_ASSIGNMENT:
-                cctx->eenv[eenv_i++] = process_word_assignment(cctx, word);
+                cctx->eenv[eenv_i++] = process_word(cctx, word);
                 break;
             case CW_BASIC:
-                cctx->args[args_i++] = process_word_basic(cctx, word);
+                cctx->args[args_i++] = process_word(cctx, word);
                 break;
             case CW_REDIRECTION_IN:
-                if (cctx->redir_in != NULL) free(cctx->redir_in);
-                cctx->redir_in = process_word_redir_in(cctx, word);
+                if (cctx->redir_in != NULL)
+                    free(cctx->redir_in);
+                cctx->redir_in = process_word(cctx, word);
                 break;
             case CW_REDIRECTION_OUT:
-                if (cctx->redir_out != NULL) free(cctx->redir_out);
-                cctx->redir_out = process_word_redir_out(cctx, word);
+                if (cctx->redir_out != NULL)
+                    free(cctx->redir_out);
+                cctx->redir_out = process_word(cctx, word);
                 break;
         }
-        log_trace("w3");
         DeleteCommandWord(word);
     }
-    free(cmd_expr);
+    DeleteCommandExpression(cmd_expr);
 }
 
 /// @brief Free command ctx struct
 /// @param cctx Pointer to the struct
 void free_command(CommandCtx* cctx) {
-    log_trace("");
     if (cctx == NULL) return;
-    log_trace("");
     if (cctx->args != NULL) {
-        log_trace("Args pointer %i", cctx->args);
         free_str_arr(cctx->args);
         cctx->args = NULL;
     }
-    log_trace("");
     if (cctx->eenv != NULL) {
-        log_trace("Eenv pointer %i", cctx->eenv);
-        log_trace("");
         free_str_arr(cctx->eenv);
-        log_trace("");
         cctx->eenv = NULL;
-        log_trace("");
     }
-    log_trace("");
     if (cctx->redir_in != NULL) {
-        log_trace("Redirect in: '%s'", cctx->redir_in);
         free(cctx->redir_in);
         cctx->redir_in = NULL;
     }
-    log_trace("");
     if (cctx->redir_out != NULL) {
-        log_trace("Redirect out: '%s'", cctx->redir_out);
         free(cctx->redir_out);
         cctx->redir_out = NULL;
     }
-    log_trace("");
 }
 
 int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx) {
-    log_trace("");
+    log_trace("=== Running command:");
+    print_str_arr("Arg: %s", curr_cctx->args);
+    print_str_arr("Env: %s", curr_cctx->eenv);
+    log_trace("===");
 
     int pipe_in, pipe_out;
 
-    log_trace("");
+    // Configure in pipe
     if (ectx->next_pipe_in > 0) {
-        log_trace("");
         pipe_in = ectx->next_pipe_in;
-        log_trace("");
+        log_trace("Input piped from previous process");
     }
     else if (curr_cctx->redir_in != NULL) {
-        log_trace("");
         pipe_in = unwrap(file_in(curr_cctx->redir_in));
-        log_trace("");
+        log_trace("Input piped from %s", curr_cctx->redir_in);
     }
     else {
-        log_trace("");
         pipe_in = STDIN_FILENO;
-        log_trace("");
+        log_trace("Input piped from standard input");
     }
     
+    // Configure out pipe
     if (curr_cctx->redir_out != NULL) {
         pipe_out = unwrap(file_out(curr_cctx->redir_out));
-        log_trace("");
         ectx->next_pipe_in = -1;
-        log_trace("");
-    } else if (next_cctx == NULL) {
-        log_trace("");
+        log_trace("Output piped to %s", curr_cctx->redir_out);
+    }
+    else if (next_cctx == NULL) {
         pipe_out = STDOUT_FILENO;
-        log_trace("");
         ectx->next_pipe_in = -1;
-        log_trace("");
+        log_trace("Output piped to standard output");
     }
     else {
-        log_trace("");
         create_pipe_pair(&(ectx->next_pipe_in), &pipe_out);
-        log_trace("");
+        log_trace("Output piped to next process");
     }
 
-    char *file = curr_cctx->args[0];
-    if (file == NULL) {
-        printf("No command provided.");
-        return -1;
+    // Check existence of command
+    char *cmd = curr_cctx->args[0];
+    if (cmd == NULL) {
+        printf("no command provided");
+        panic("no command provided");
     }
 
-    if (strcmp(file, "echo") == 0) {
-        log_info("Running internal command '%s'", file);
-        attach_command(pipe_in, pipe_out, echo_cmd, file, curr_cctx->args, curr_cctx->eenv);
+    // Run commands
+    if (strcmp(cmd, "cd") == 0) {
+        log_info("Running internal command '%s'", cmd);
+        expect(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
     }
-    else if (strcmp(file, "cd") == 0) {
-        log_info("Running internal command '%s'", file);
-        attach_command(pipe_in, pipe_out, NULL, file, curr_cctx->args, curr_cctx->eenv);
+    else if (strcmp(cmd, "echo") == 0) {
+        log_info("Running internal command '%s'", cmd);
+        expect(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
     }
-    else if (strcmp(file, "pwd") == 0) {
-        log_info("Running internal command '%s'", file);
-        attach_command(pipe_in, pipe_out, pwd_cmd, file, curr_cctx->args, curr_cctx->eenv);
-    }
-    else if (strcmp(file, "echo") == 0) {
-        
-    }
-    else if (strcmp(file, "echo") == 0) {
-        
+    else if (strcmp(cmd, "pwd") == 0) {
+        log_info("Running internal command '%s'", cmd);
+        expect(attach_command(pipe_in, pipe_out, pwd_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
     }
     else {
-        log_info("Running external command '%s'", file);
-        attach_command(pipe_in, pipe_out, echo_cmd, file, curr_cctx->args, curr_cctx->eenv);
+        log_info("Running external command '%s'", cmd);
+        expect(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run external command");
     }
 
-    log_trace("");
     return 0;
 }
 
@@ -500,19 +299,9 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
 /// @param cctx Command to fill
 /// @return Pointer to the same command
 CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx) {
-    log_trace("");
     process_command(cctx, **cmd_expr);
-    log_trace("");
     **cmd_expr = NULL;
     *cmd_expr += 1;
-
-    log_trace("=== Running command:");
-    print_str_arr("Arg: %s", cctx->args);
-    print_str_arr("Env: %s", cctx->eenv);
-    if (cctx->redir_in != NULL) log_trace("In: %s", cctx->redir_in);
-    if (cctx->redir_out != NULL) log_trace("Out: %s", cctx->redir_out);
-    log_trace("===");
-
     return cctx;
 }
 
