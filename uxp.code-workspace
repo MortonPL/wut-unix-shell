@@ -61,7 +61,9 @@
 			"interface.h": "c",
 			"parser.h": "c",
 			"lexer.h": "c",
-			"stdbool.h": "c"
+			"stdbool.h": "c",
+			"pipes.h": "c",
+			"types.h": "c"
 		},
 	},
 }

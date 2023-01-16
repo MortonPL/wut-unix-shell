@@ -68,6 +68,7 @@ CommandExpression *CreateCommandExpression(CommandWord *pFirst)
     pExpression->Length = 1;
     (pExpression->Words)[0] = pFirst;
     (pExpression->Words)[1] = NULL;
+    pExpression->AnyNonAssignment = pFirst->Type != CW_ASSIGNMENT;
     return pExpression;
 }
 
@@ -127,6 +128,10 @@ bool AppendToCommandExpression(CommandExpression *pExpression, CommandWord *pNex
     pExpression->Length++;
     (pExpression->Words)[pExpression->Length - 1] = pNext;
     (pExpression->Words)[pExpression->Length] = NULL;
+    if (pNext->Type != CW_ASSIGNMENT)
+        pExpression->AnyNonAssignment = true;
+    if (pExpression->AnyNonAssignment && pNext->Type == CW_ASSIGNMENT)
+        pNext->Type = CW_BASIC;
     return true;
 }
 

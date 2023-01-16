@@ -32,6 +32,7 @@ typedef struct {
 typedef struct {
     CommandWord **Words;
     size_t Length;
+    bool AnyNonAssignment;
 } CommandExpression;
 
 typedef struct PipeExpression {

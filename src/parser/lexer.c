@@ -69,7 +69,7 @@
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types.
+ * if you want the limit (max/min) macros for int types. 
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -86,7 +86,7 @@ typedef uint32_t flex_uint32_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t;
+typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 
@@ -233,10 +233,10 @@ typedef size_t yy_size_t;
 #define EOB_ACT_CONTINUE_SCAN 0
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
-
+    
     #define YY_LESS_LINENO(n)
     #define YY_LINENO_REWIND_TO(ptr)
-
+    
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
 	do \
@@ -520,8 +520,8 @@ static const flex_int16_t yy_chk[51] =
 
 static const flex_int16_t yy_rule_linenum[14] =
     {   0,
-       23,   24,   25,   26,   28,   31,   35,   38,   41,   44,
-       47,   48,   49
+       24,   25,   26,   27,   29,   31,   34,   36,   38,   40,
+       42,   43,   44
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -612,7 +612,7 @@ static int yy_init_globals ( yyscan_t yyscanner );
     /* This must go here because YYSTYPE and YYLTYPE are included
      * from bison output in section 1.*/
     #    define yylval yyg->yylval_r
-
+    
 int yylex_init (yyscan_t* scanner);
 
 int yylex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t* scanner);
@@ -676,7 +676,7 @@ extern int yywrap ( yyscan_t yyscanner );
 
 /* %not-for-header */
 #ifndef YY_NO_UNPUT
-
+    
 #endif
 /* %ok-for-header */
 
@@ -963,23 +963,23 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 23 "lexer.l"
-{ fputs(";\n", stderr); return OP_EXPR_END; }
+#line 24 "lexer.l"
+{ return OP_EXPR_END; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 24 "lexer.l"
-{ fputs("|\n", stderr); return OP_PIPE; }
+#line 25 "lexer.l"
+{ return OP_PIPE; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 25 "lexer.l"
-{ fputs("<\n", stderr); return OP_PULL; }
+#line 26 "lexer.l"
+{ return OP_PULL; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 26 "lexer.l"
-{ fputs(">\n", stderr); return OP_PUSH; }
+#line 27 "lexer.l"
+{ return OP_PUSH; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
@@ -989,26 +989,26 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 30 "lexer.l"
+#line 31 "lexer.l"
 { yytext[strlen(yytext) - 1] = '\0';
                                     yylval->text = yytext + 1;
                                     return ESCAPED_STRING_PART; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 35 "lexer.l"
+#line 34 "lexer.l"
 { yylval->text = yytext + 1;
                                     return ESCAPED_STRING_PART; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 38 "lexer.l"
+#line 36 "lexer.l"
 { yylval->text = yytext;
                                     return STRING_PART; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 41 "lexer.l"
+#line 38 "lexer.l"
 { yylval->text = yytext;
                                     return STRING_PART; }
 	YY_BREAK
@@ -1020,26 +1020,26 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 47 "lexer.l"
-{ fputs("WHITESPACES\n", stderr); return WHITESPACES; }
+#line 42 "lexer.l"
+{ return WHITESPACES; }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 48 "lexer.l"
-{ fputs("\\n\n", stderr); continue; }
+#line 43 "lexer.l"
+{ continue; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 49 "lexer.l"
-{ fputs("YYUNDEF\n", stderr); return YYUNDEF; }
+#line 44 "lexer.l"
+{ return YYUNDEF; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 51 "lexer.l"
+#line 46 "lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1048 "lexer.c"
+#line 1043 "lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1591,7 +1591,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 /* %endif */
 {
 	YY_BUFFER_STATE b;
-
+    
 	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state ) , yyscanner );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
@@ -1674,7 +1674,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 /* %if-c-only */
 
         b->yy_is_interactive = 0;
-
+    
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -1842,7 +1842,7 @@ static void yyensure_buffer_stack (yyscan_t yyscanner)
 YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
-
+    
 	if ( size < 2 ||
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
@@ -1880,7 +1880,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscann
  */
 YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner)
 {
-
+    
 	return yy_scan_bytes( yystr, (int) strlen(yystr) , yyscanner);
 }
 /* %endif */
@@ -1899,7 +1899,7 @@ YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len , yyscan
 	char *buf;
 	yy_size_t n;
 	int i;
-
+    
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = (yy_size_t) (_yybytes_len + 2);
 	buf = (char *) yyalloc( n , yyscanner );
@@ -1982,7 +1982,7 @@ int yyget_lineno  (yyscan_t yyscanner)
 
         if (! YY_CURRENT_BUFFER)
             return 0;
-
+    
     return yylineno;
 }
 
@@ -1995,7 +1995,7 @@ int yyget_column  (yyscan_t yyscanner)
 
         if (! YY_CURRENT_BUFFER)
             return 0;
-
+    
     return yycolumn;
 }
 
@@ -2061,7 +2061,7 @@ void yyset_lineno (int  _line_number , yyscan_t yyscanner)
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "yyset_lineno called with no buffer" );
-
+    
     yylineno = _line_number;
 }
 
@@ -2076,7 +2076,7 @@ void yyset_column (int  _column_no , yyscan_t yyscanner)
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "yyset_column called with no buffer" );
-
+    
     yycolumn = _column_no;
 }
 
@@ -2325,7 +2325,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* %ok-for-header */
 
-#line 51 "lexer.l"
+#line 46 "lexer.l"
 
 
 
@@ -2338,3 +2338,4 @@ int yyerror(PipeExpression **pExpression, yyscan_t pScanner, const char *pMessag
     (void)pMessage;
     return 0;
 }
+

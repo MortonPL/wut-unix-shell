@@ -1,3 +1,4 @@
+#include <glob.h>
 #include "cli.h"
 #include "../lib/logger.h"
 #include "../lib/log.c/src/log.h"
@@ -115,11 +116,23 @@ char* env_get(char **env, char *key) {
     return NULL;
 }
 
+static char *copyString(const char *pSource)
+{
+    size_t strLength = strlen(pSource);
+    char *pCopy = (char *)malloc(strLength + 1);
+    if (pCopy == NULL)
+        return NULL;
+    memcpy(pCopy, pSource, strLength + 1);
+    return pCopy;
+}
+
 /// @brief Process a single basic word
 /// @param cctx Command context
 /// @param word Command word
+/// @param returnedCount Count of returned strings
+/// @param doGlob Should do glob?
 /// @return Processed word
-char* process_word(CommandCtx* cctx, CommandWord *word) {
+char **process_word(CommandCtx* cctx, CommandWord *word, size_t *returnedCount, bool doGlob) {
     // Find length
     size_t len = 0;
     WordElement **els = word->Elements;
@@ -156,8 +169,29 @@ char* process_word(CommandCtx* cctx, CommandWord *word) {
 
         els += 1;
     }
+    log_trace("");
 
-    return outbuf;
+    char **pReturned = NULL;
+    if (doGlob) {
+        glob_t globbuf;
+        glob(outbuf, GLOB_DOOFFS | GLOB_NOMAGIC, NULL, &globbuf);
+        (*returnedCount) = globbuf.gl_pathc;
+        char **pOriginal = globbuf.gl_pathv;
+        pReturned = (char **)malloc(sizeof(char *) * (globbuf.gl_pathc + 1));
+        for (size_t i = 0; i < globbuf.gl_pathc; i++) {
+            log_trace("Copying glob element: %s", pOriginal[i]);
+            pReturned[i] = copyString(pOriginal[i]);
+        }
+        pReturned[globbuf.gl_pathc] = NULL;
+        globfree(&globbuf);
+        free(outbuf);
+    } else {
+        (*returnedCount) = 1;
+        pReturned = (char **)malloc(sizeof(char *) * 2);
+        pReturned[0] = outbuf;
+        pReturned[1] = NULL;
+    }
+    return pReturned;
 }
 
 /// @brief Fill command ctx with information from command expression
@@ -172,22 +206,39 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
     CommandWord **words = cmd_expr->Words;
     while (*words != NULL) {
         CommandWord *word = *words++;
+        size_t returnedCount = 0;
+        char **pArgs = NULL;
         switch (word->Type) {
             case CW_ASSIGNMENT:
-                cctx->eenv[eenv_i++] = process_word(cctx, word);
+                pArgs = process_word(cctx, word, &returnedCount, args_i > 0);
+                cctx->eenv[eenv_i++] = pArgs[0];
+                free(pArgs);
                 break;
-            case CW_BASIC:
-                cctx->args[args_i++] = process_word(cctx, word);
+            case CW_BASIC: {
+                pArgs = process_word(cctx, word, &returnedCount, args_i > 0);
+                if (returnedCount > 1) {
+                    args_count += returnedCount - 1;
+                    cctx->args = (char **)realloc(cctx->args, sizeof(char *) * (args_count + 1));
+                    (cctx->args)[args_count] = NULL;
+                }
+                for (size_t i = 0; i < returnedCount; i++)
+                    cctx->args[args_i++] = pArgs[i];
+                free(pArgs);
                 break;
+            }
             case CW_REDIRECTION_IN:
                 if (cctx->redir_in != NULL)
                     free(cctx->redir_in);
-                cctx->redir_in = process_word(cctx, word);
+                pArgs = process_word(cctx, word, &returnedCount, false);
+                cctx->redir_in = pArgs[0];
+                free(pArgs);
                 break;
             case CW_REDIRECTION_OUT:
                 if (cctx->redir_out != NULL)
                     free(cctx->redir_out);
-                cctx->redir_out = process_word(cctx, word);
+                pArgs = process_word(cctx, word, &returnedCount, false);
+                cctx->redir_out = pArgs[0];
+                free(pArgs);
                 break;
         }
     }
