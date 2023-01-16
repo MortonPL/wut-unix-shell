@@ -9,14 +9,18 @@
 #include <sys/stat.h>
 #include "log.c/src/log.h"
 
-int init_logger();
+/// @brief Initialize logger at the beginning of app
+void init_logger();
+
+/// @brief Cleanup logger after app finished
+void drop_logger();
 
 /// @brief Internal function for leaving application after fatal exception
 /// @param file Source file name from macro
 /// @param line Source line name from macro
 /// @param fmt Format schema
 /// @param ... Format args
-void __panic(const char *file, int line, const char *fmt, ...);
+int __panic(const char *file, int line, const char *fmt, ...);
 
 /// @brief Internal function for leaving application in case of error with custom message
 /// @param status_code Status code to check

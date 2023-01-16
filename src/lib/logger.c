@@ -61,10 +61,12 @@ void current_time_string(char* buffer) {
     strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", tm);
 }
 
-int init_logger() {
+static FILE *log_file;
+
+void init_logger() {
     int res = ensure_logs_folder_exists();
     if (res < 0)
-        return res;
+        exit(-1);
 
     char log_file_path[64] = "logs/";
     current_time_string(&log_file_path[strlen(log_file_path)]);
@@ -76,12 +78,17 @@ int init_logger() {
     strcat(log_file_path, "-release.txt");
     log_mode = LOG_ERROR;
 #endif
-    FILE *log_file = fopen(log_file_path, "w");
+    log_file = fopen(log_file_path, "w");
     log_add_fp(log_file, log_mode);
-    return 0;
 }
 
-void __panic(const char *file, int line, const char *fmt, ...) {
+void drop_logger() {
+    if (log_file != NULL) {
+        fclose(log_file);
+    }
+}
+
+int __panic(const char *file, int line, const char *fmt, ...) {
     log_Event ev = {
         .fmt   = fmt,
         .file  = file,
@@ -91,7 +98,7 @@ void __panic(const char *file, int line, const char *fmt, ...) {
     va_start(ev.ap, fmt);
     vlog_log(ev);
     va_end(ev.ap);
-    exit(-1);
+    return -1;
 }
 
 int __expect(int status_code, const char *file, int line, const char *fmt, ...) {
@@ -105,7 +112,7 @@ int __expect(int status_code, const char *file, int line, const char *fmt, ...) 
         va_start(ev.ap, fmt);
         vlog_log(ev);
         va_end(ev.ap);
-        exit(-1);
+        return -1;
     }
     return status_code;
 }
