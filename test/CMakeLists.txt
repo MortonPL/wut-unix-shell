@@ -3,7 +3,7 @@ enable_testing()
 # sources
 set(TEST_FILES
     main.c
-    example.c
+    parser.c
     strpls.c
 )
 
