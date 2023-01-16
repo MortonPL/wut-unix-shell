@@ -4,6 +4,7 @@
 #include "../lib/log.c/src/log.h"
 
 int cd_cmd(const char *file, char* const* argv, char* const* envp) {
+    (void)file, (void)envp;
     argv++;
     if (*argv == NULL)
         panic("missing required argument");
@@ -15,11 +16,13 @@ int cd_cmd(const char *file, char* const* argv, char* const* envp) {
         panic("too many arguments");
 
     unwrap(chdir(new_dir));
+    return 0;
 }
 
 #define MAX_PATH 1024
 
 int pwd_cmd(const char *file, char* const* argv, char* const* envp) {
+    (void)file, (void)argv, (void)envp;
     char buf[MAX_PATH];
 
     char *res = getcwd(buf, MAX_PATH);
@@ -31,6 +34,7 @@ int pwd_cmd(const char *file, char* const* argv, char* const* envp) {
 }
 
 int echo_cmd(const char *file, char* const* argv, char* const* envp) {
+    (void)file, (void)envp;
     argv++;
     while (*argv != NULL) {
         printf("%s ", *argv);
@@ -75,6 +79,8 @@ void subprocess_args_eenv_counts(CommandExpression *cmd_expr, size_t *args_count
                 break;
             case CW_BASIC:
                 (*args_count)++;
+                break;
+            default:
                 break;
         }
     }
@@ -283,7 +289,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         log_trace("Input piped from %s", curr_cctx->redir_in);
     }
     else if (ectx->next_pipe_in == 0) {
-        pipe_in = unwrap(file_in(DevNull));
+        pipe_in = unwrap(file_in((char *)DevNull));
         log_trace("Input piped from %s", DevNull);
     }
     else {
@@ -303,7 +309,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         log_trace("Output piped to standard output");
     }
     else if (next_cctx->redir_in != NULL) {
-        pipe_out = unwrap(file_out(DevNull));
+        pipe_out = unwrap(file_out((char *)DevNull));
         ectx->next_pipe_in = 0;
         log_trace("Output piped to %s", DevNull);
     }

@@ -63,7 +63,8 @@
 			"lexer.h": "c",
 			"stdbool.h": "c",
 			"pipes.h": "c",
-			"types.h": "c"
+			"types.h": "c",
+			"strpls.h": "c"
 		},
 	},
 }

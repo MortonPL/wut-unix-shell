@@ -16,6 +16,7 @@ void handleInput(ExecutionCtx* env, char* command) {
 }
 
 void handleSignal(int signalNumber) {
+    (void)signalNumber;
     exit(-1);
 }
 
@@ -36,7 +37,7 @@ void interface(const int isBatch, const char** argumentsValues) {
 
     // actual body
     if (isBatch) {
-        FILE* input = fmemopen(argumentsValues[isBatch], strlen(argumentsValues[isBatch]), "r");
+        FILE* input = fmemopen((void *)(argumentsValues[isBatch]), strlen(argumentsValues[isBatch]), "r");
         while (fgets(command, COMMAND_SIZE, input) != NULL) {
             if (strlen(command) == 0)
                 continue;
