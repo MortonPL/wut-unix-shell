@@ -3,8 +3,6 @@
 #define COMMAND_SIZE 256
 #define FLAG_AMOUNT 2
 
-int CHILD_PID = -1;
-
 void handleInput(ExecutionCtx* env, char* command) {
     LexerState lexerState;
     InitializeLexer(&lexerState, command);
@@ -18,7 +16,7 @@ void handleInput(ExecutionCtx* env, char* command) {
 }
 
 void handleSignal(int signalNumber) {
-    kill(signalNumber, CHILD_PID);
+    exit(-1);
 }
 
 void interface(const int isBatch, const char** argumentsValues) {

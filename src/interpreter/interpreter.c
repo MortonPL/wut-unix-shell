@@ -55,19 +55,23 @@ unsigned getFlags(char* flags, CommandContext* ctx) {
 //     unwrap(chdir(env->cwd));
 // }
 
-void pwd_cmd(const char *file, char* const* argv, char* const* envp) {
+int pwd_cmd(const char *file, char* const* argv, char* const* envp) {
     char cwd[COMMAND_SIZE] = "cwd";
     arrayget(envp, cwd);
     printf("%s\n", cwd);
+    return 0;
 }
 
-void echo_cmd(const char *file, char* const* argv, char* const* envp) {
-    if (*argv++ != NULL)
+int echo_cmd(const char *file, char* const* argv, char* const* envp) {
+    if (*argv != NULL) {
+        argv += 1;
         while (*argv != NULL) {
             printf("%s ", *argv);
             argv++;
         }
+    }
     printf("\n");
+    return 0;
 }
 
 void print(const char* flags, unsigned skip, CommandContext* ctx) {
@@ -90,7 +94,12 @@ void print(const char* flags, unsigned skip, CommandContext* ctx) {
 
 
 
-
+void print_str_arr(char **s) {
+    while (*s != NULL) {
+        log_trace("%s", *s);
+        s += 1;
+    }
+}
 
 /// @brief Free array of strings
 /// @param s The array of strings
@@ -367,11 +376,13 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
 void free_command(CommandCtx* cctx) {
     log_trace("");
     if (cctx == NULL) return;
+    log_trace("");
     if (cctx->args != NULL) {
         log_trace("Args pointer %i", cctx->args);
         free_str_arr(cctx->args);
         cctx->args = NULL;
     }
+    log_trace("");
     if (cctx->eenv != NULL) {
         log_trace("Eenv pointer %i", cctx->eenv);
         log_trace("");
@@ -380,11 +391,13 @@ void free_command(CommandCtx* cctx) {
         cctx->eenv = NULL;
         log_trace("");
     }
+    log_trace("");
     if (cctx->redir_in != NULL) {
         log_trace("Redirect in: '%s'", cctx->redir_in);
         free(cctx->redir_in);
         cctx->redir_in = NULL;
     }
+    log_trace("");
     if (cctx->redir_out != NULL) {
         log_trace("Redirect out: '%s'", cctx->redir_out);
         free(cctx->redir_out);
@@ -407,10 +420,10 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     
     if (curr_cctx->redir_out != NULL) {
         pipe_out = file_out(next_cctx->redir_out);
-        curr_cctx->redir_in = -1;
+        ectx->next_pipe_in = -1;
     } else if (next_cctx == NULL) {
         pipe_out = STDOUT_FILENO;
-        curr_cctx->redir_in = -1;
+        ectx->next_pipe_in = -1;
     }
     else {
         create_pipe_pair(&(ectx->next_pipe_in), &pipe_out);
@@ -442,6 +455,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     }
 
     log_trace("");
+    return 0;
 }
 
 /// @brief Perform a single iteration for command processing
@@ -454,6 +468,14 @@ CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx
     log_trace("");
     **cmd_expr = NULL;
     *cmd_expr += 1;
+
+    log_trace("====");
+    print_str_arr(cctx->args);
+    print_str_arr(cctx->eenv);
+    log_trace("%s", cctx->redir_in);
+    log_trace("%s", cctx->redir_out);
+    log_trace("====");
+
     return cctx;
 }
 
@@ -486,11 +508,12 @@ void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
 
     log_trace("");
     run_command(ectx, cctxs[0], cctxs[1]);
+    log_trace("");
 
     while (cctxs[1] != NULL) {
         free_command(cctxs[0]);
 
-        int cmd_temp = cctxs[0];
+        CommandCtx *cmd_temp = cctxs[0];
         cctxs[0] = cctxs[1];
         cctxs[1] = (*cmd_expr != NULL)
             ? iter_process_command(&cmd_expr, cmd_temp)
@@ -498,6 +521,7 @@ void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
 
         run_command(ectx, cctxs[0], cctxs[1]);
     }
-
+    log_trace("");
     free_command(cctxs[0]);
+    log_trace("");
 }
