@@ -132,6 +132,36 @@ static char *copyString(const char *pSource)
     return pCopy;
 }
 
+// does not append null terminator
+static void memcpySlashEscaped(char *pDest, const char *pSource, size_t count)
+{
+    for (size_t i = 0; i < count; i++) {
+        pDest[2 * i] = '\\';
+        pDest[2 * i + 1] = pSource[i];
+    }
+}
+
+static void getCommandWordLength(CommandCtx* cctx, CommandWord *word, size_t *baseLen, size_t *slashEscapedLen)
+{
+    *baseLen = 0;
+    *slashEscapedLen = 0;
+    WordElement **els = word->Elements;
+    while (*els != NULL) {
+        if ((*els)->Type == WE_VARIABLE_READ) {
+            char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
+            if (env_var != NULL) {
+                size_t var_len = strlen(env_var);
+                baseLen += var_len;
+                slashEscapedLen += var_len;
+            }
+        } else {
+            *baseLen += (*els)->Length;
+            *slashEscapedLen += (*els)->Length * (((*els)->Type == WE_ESCAPED_STRING) ? 2 : 1);
+        }
+        els += 1;
+    }
+}
+
 /// @brief Process a single basic word
 /// @param cctx Command context
 /// @param word Command word
@@ -139,57 +169,65 @@ static char *copyString(const char *pSource)
 /// @param doGlob Should do glob?
 /// @return Processed word
 char **process_word(CommandCtx* cctx, CommandWord *word, size_t *returnedCount, bool doGlob) {
-    // Find length
-    size_t len = 0;
+    size_t len = 0, escapedLen = 0;
+    getCommandWordLength(cctx, word, &len, &escapedLen);
+
+    // Fill
+    char *outbuf = malloc(len + 1);
+    outbuf[len] = 0;
+    size_t offset = 0;
+
+    char *escapedOutbuf = malloc(escapedLen + 1);
+    escapedOutbuf[escapedLen] = 0;
+    size_t escapedOffset = 0;
+
     WordElement **els = word->Elements;
     while (*els != NULL) {
         if ((*els)->Type == WE_VARIABLE_READ) {
             char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
             if (env_var != NULL) {
                 size_t var_len = strlen(env_var);
-                len += var_len;
-            }
-        }
-        else
-            len += (*els)->Length;
-        els += 1;
-    }
-
-    // Fill
-    char *outbuf = malloc(len + 1);
-    outbuf[len] = 0;
-    size_t offset = 0;
-    els = word->Elements;
-    while (*els != NULL) {
-        if ((*els)->Type == WE_VARIABLE_READ) {
-            char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
-            if (env_var != NULL) {
-                size_t var_len = strlen(env_var);
                 memcpy(&outbuf[offset], env_var, var_len);
+                memcpy(&escapedOutbuf[escapedOffset], env_var, var_len);
                 offset += var_len;
+                escapedOffset += var_len;
             }
+        } else if ((*els)->Type == WE_ESCAPED_STRING) {
+            memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
+            memcpySlashEscaped(&escapedOutbuf[escapedOffset], (*els)->Value, (*els)->Length);
+            offset += (*els)->Length;
+            escapedOffset += (*els)->Length * 2;
         } else {
             memcpy(&outbuf[offset], (*els)->Value, (*els)->Length);
+            memcpy(&escapedOutbuf[escapedOffset], (*els)->Value, (*els)->Length);
             offset += (*els)->Length;
+            escapedOffset += (*els)->Length;
         }
 
         els += 1;
     }
-    log_trace("");
+    log_trace("Processed word: %s", outbuf);
+    log_trace("Processed escaped word: %s", escapedOutbuf);
 
     char **pReturned = NULL;
+    bool globMatched = false;
+    glob_t globbuf = {0};
     if (doGlob) {
-        glob_t globbuf = {};
-        glob(outbuf, GLOB_NOMAGIC, NULL, &globbuf);
-        (*returnedCount) = globbuf.gl_pathc;
-        char **pOriginal = globbuf.gl_pathv;
-        pReturned = (char **)malloc(sizeof(char *) * (globbuf.gl_pathc + 1));
-        for (size_t i = 0; i < globbuf.gl_pathc; i++) {
-            log_trace("Copying glob element: %s", pOriginal[i]);
-            pReturned[i] = copyString(pOriginal[i]);
+        if ((globMatched = (glob(escapedOutbuf, 0, NULL, &globbuf) == 0))) {
+            (*returnedCount) = globbuf.gl_pathc;
+            char **pOriginal = globbuf.gl_pathv;
+            pReturned = (char **)malloc(sizeof(char *) * (globbuf.gl_pathc + 1));
+            pReturned[globbuf.gl_pathc] = NULL;
+            for (size_t i = 0; i < globbuf.gl_pathc; i++) {
+                log_trace("Copying glob element: %s", pOriginal[i]);
+                pReturned[i] = copyString(pOriginal[i]);
+            }
         }
-        pReturned[globbuf.gl_pathc] = NULL;
-        globfree(&globbuf);
+    }
+    globfree(&globbuf);
+    free(escapedOutbuf);
+
+    if (globMatched) {
         free(outbuf);
     } else {
         (*returnedCount) = 1;
@@ -323,7 +361,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     char *cmd = curr_cctx->args[0];
     if (cmd == NULL) {
         printf("no command provided");
-        panic("no command provided");
+        return panic("no command provided");
     }
 
     // Run commands
