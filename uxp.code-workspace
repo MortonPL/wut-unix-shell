@@ -64,7 +64,9 @@
 			"stdbool.h": "c",
 			"pipes.h": "c",
 			"types.h": "c",
-			"strpls.h": "c"
+			"strpls.h": "c",
+			"limits": "c",
+			"tau.h": "c"
 		},
 	},
 }
