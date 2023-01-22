@@ -25,3 +25,5 @@ typedef struct {
 // void print(const char* prompt, const char* flags);
 
 void interpret(PipeExpression* prompt, ExecutionCtx* env);
+
+void kill_commands();

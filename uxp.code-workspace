@@ -4,7 +4,6 @@
 			"path": "."
 		}
 	],
-
 	"extensions": {
 		"recommendations": [
 			"ms-vscode-remote.remote-wsl",
@@ -18,7 +17,6 @@
 			"wayou.vscode-todo-highlight",
 		]
 	},
-
 	"settings": {
 		"todohighlight.isEnable": true,
 		"todohighlight.isCaseSensitive": true,
@@ -55,18 +53,11 @@
 			}
 		],
 		"files.associations": {
-			"*.y": "yacc",
+			"*.ron": "ron",
+			"*.luac": "lua",
 			"mmem.h": "c",
-			"stdio.h": "c",
-			"interface.h": "c",
-			"parser.h": "c",
-			"lexer.h": "c",
-			"stdbool.h": "c",
-			"pipes.h": "c",
-			"types.h": "c",
-			"strpls.h": "c",
-			"limits": "c",
-			"tau.h": "c"
+			"log.h": "c",
+			"type_traits": "c"
 		},
 	},
 }

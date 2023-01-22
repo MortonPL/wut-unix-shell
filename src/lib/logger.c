@@ -90,7 +90,7 @@ void drop_logger() {
     }
 }
 
-int __panic(const char *file, int line, const char *fmt, ...) {
+void __panic(const char *file, int line, const char *fmt, ...) {
     log_Event ev = {
         .fmt   = fmt,
         .file  = file,
@@ -100,10 +100,9 @@ int __panic(const char *file, int line, const char *fmt, ...) {
     va_start(ev.ap, fmt);
     vlog_log(ev);
     va_end(ev.ap);
-    return -1;
 }
 
-int __expect(int status_code, const char *file, int line, const char *fmt, ...) {
+int __logerr(int status_code, const char *file, int line, const char *fmt, ...) {
     if (status_code < 0) {
         log_Event ev = {
             .fmt   = fmt,
@@ -119,6 +118,12 @@ int __expect(int status_code, const char *file, int line, const char *fmt, ...) 
     return status_code;
 }
 
-int __unwrap(int status_code, const char *file, int line) {
-    return __expect(status_code, file, line, OsErrorMessage, strerror(errno));
+int __logoserr(int status_code, const char *file, int line) {
+    return __logerr(status_code, file, line, OsErrorMessage, strerror(errno));
+}
+
+void* __notnull(void* pointer, const char *file, int line) {
+    if (pointer == NULL)
+        __panic(file, line, "could not allocate memory");
+    return pointer;
 }

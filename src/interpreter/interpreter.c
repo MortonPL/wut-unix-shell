@@ -3,6 +3,8 @@
 #include "../lib/logger.h"
 #include "../lib/log.c/src/log.h"
 
+pid_t* children = NULL;
+
 int cd_cmd(const char *file, char* const* argv, char* const* envp) {
     (void)file, (void)envp;
     argv++;
@@ -15,7 +17,7 @@ int cd_cmd(const char *file, char* const* argv, char* const* envp) {
     if (*argv != NULL)
         panic("too many arguments");
 
-    unwrap(chdir(new_dir));
+    logoserr(chdir(new_dir));
     return 0;
 }
 
@@ -323,11 +325,13 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         log_trace("Input piped from previous process");
     }
     else if (curr_cctx->redir_in != NULL) {
-        pipe_in = unwrap(file_in(curr_cctx->redir_in));
+        pipe_in = logoserr(file_in(curr_cctx->redir_in));
+        errreturn(pipe_in);
         log_trace("Input piped from %s", curr_cctx->redir_in);
     }
     else if (ectx->next_pipe_in == 0) {
-        pipe_in = unwrap(file_in((char *)DevNull));
+        pipe_in = logoserr(file_in((char *)DevNull));
+        errreturn(pipe_in);
         log_trace("Input piped from %s", DevNull);
     }
     else {
@@ -337,7 +341,8 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     
     // Configure out pipe
     if (curr_cctx->redir_out != NULL) {
-        pipe_out = unwrap(file_out(curr_cctx->redir_out));
+        pipe_out = logoserr(file_out(curr_cctx->redir_out));
+        errreturn(pipe_out);
         ectx->next_pipe_in = 0;
         log_trace("Output piped to %s", curr_cctx->redir_out);
     }
@@ -347,12 +352,13 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         log_trace("Output piped to standard output");
     }
     else if (next_cctx->redir_in != NULL) {
-        pipe_out = unwrap(file_out((char *)DevNull));
+        pipe_out = logoserr(file_out((char *)DevNull));
+        errreturn(pipe_out);
         ectx->next_pipe_in = 0;
         log_trace("Output piped to %s", DevNull);
     }
     else {
-        create_pipe_pair(&(ectx->next_pipe_in), &pipe_out);
+        errreturn(logoserr(create_pipe_pair(&(ectx->next_pipe_in), &pipe_out)));
         log_trace("Output piped to next process");
     }
     log_trace("===");
@@ -361,26 +367,43 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     char *cmd = curr_cctx->args[0];
     if (cmd == NULL) {
         printf("no command provided");
-        return panic("no command provided");
+        panic("no command provided");
     }
 
     // Run commands
+    pid_t pid = 0;
     if (strcmp(cmd, "cd") == 0) {
         log_info("Running internal command '%s'", cmd);
-        expect(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
-    }
-    else if (strcmp(cmd, "echo") == 0) {
+        int status = logerr(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
+    } else if (strcmp(cmd, "echo") == 0) {
         log_info("Running internal command '%s'", cmd);
-        expect(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
-    }
-    else if (strcmp(cmd, "pwd") == 0) {
+        pid = logerr(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
+        log_trace("%i", pid);
+        errreturn(pid);
+    } else if (strcmp(cmd, "pwd") == 0) {
         log_info("Running internal command '%s'", cmd);
-        expect(attach_command(pipe_in, pipe_out, pwd_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
-    }
-    else {
+        pid = logerr(attach_command(pipe_in, pipe_out, pwd_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
+        errreturn(pid);
+    } else {
         log_info("Running external command '%s'", cmd);
-        expect(attach_command(pipe_in, pipe_out, NULL, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run external command");
+        pid = logerr(attach_command(pipe_in, pipe_out, NULL, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run external command");
+        errreturn(pid);
     }
+
+    if (pid != 0) {
+        int child_idx = 0;
+        pid_t *child_iter = children;
+        while (*child_iter != 0) {
+            child_idx++;
+            child_iter++;
+        }
+        children[child_idx] = pid;
+    }
+
+    if (ectx->next_pipe_in > 0)
+        wait_fd_ready(ectx->next_pipe_in);
+
+    errreturn(logoserr(check_children(children)));
 
     return 0;
 }
@@ -395,10 +418,20 @@ CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx
     return cctx;
 }
 
+int count_commands(CommandExpression **cmd_expr) {
+    int count = 0;
+    while (*cmd_expr++ != NULL)
+        count++;
+    return count;
+}
+
 /// @brief Interpret a pipe expression
 /// @param pipe_expr The pipe expression
 /// @param ectx Execution context
 void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
+    int command_count = count_commands(pipe_expr->Commands);
+    children = calloc(command_count + 1, sizeof(int));
+
     CommandCtx cmd1 = {
         .args = NULL,
         .eenv = NULL,
@@ -433,5 +466,12 @@ void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
 
         run_command(ectx, cctxs[0], cctxs[1]);
     }
+
+    wait_for_children(children);
     free_command(cctxs[0]);
+    free(children);
+}
+
+void kill_commands() {
+    kill_children(children);
 }

@@ -39,10 +39,12 @@ int create_pipe_pair(int* pipe_in, int* pipe_out) {
     char fifo_path[42];
     generate_fifo_filename(fifo_path);
 
-    unwrap(mkfifo(fifo_path, S_IRUSR | S_IWUSR));
-    int pipe_in_res = unwrap(open(fifo_path, O_RDONLY | O_NONBLOCK | __O_CLOEXEC));
-    int pipe_out_res = unwrap(open(fifo_path, O_WRONLY | O_NONBLOCK | __O_CLOEXEC));
-    
+    errreturn(logoserr(mkfifo(fifo_path, S_IRUSR | S_IWUSR)));
+    int pipe_in_res = logoserr(open(fifo_path, O_RDONLY | O_NONBLOCK | __O_CLOEXEC));
+    errreturn(pipe_in_res);
+    int pipe_out_res = logoserr(open(fifo_path, O_WRONLY | O_NONBLOCK | __O_CLOEXEC));
+    errreturn(pipe_out_res);
+
     *pipe_in = pipe_in_res;
     *pipe_out = pipe_out_res;
     return 0;
@@ -54,7 +56,7 @@ int wait_fd_ready(int fd) {
         .events = POLLIN,
     };
 
-    unwrap(poll(&pfd, 1, -1));
+    errreturn(logoserr(poll(&pfd, 1, -1)));
     
     if (pfd.events & POLLERR)
         panic("Fifo has no reader");
@@ -68,19 +70,19 @@ int wait_fd_ready(int fd) {
 int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
     // Overwrite standard pipes and close the provided ones if necessary
     if (pipe_in != STDIN_FILENO) {
-        unwrap(dup2(pipe_in, STDIN_FILENO));
-        unwrap(close(pipe_in));
+        errreturn(logoserr(dup2(pipe_in, STDIN_FILENO)));
+        errreturn(logoserr(close(pipe_in)));
     }
     if (pipe_out != STDOUT_FILENO) {
-        unwrap(dup2(pipe_out, STDOUT_FILENO));
-        unwrap(close(pipe_out));
+        errreturn(logoserr(dup2(pipe_out, STDOUT_FILENO)));
+        errreturn(logoserr(close(pipe_out)));
     }
 
     // Run internal or external command
     if (callback != NULL)
-        expect(callback(file, argv, envp), "Internal command failed");
+        errreturn(logerr(callback(file, argv, envp), "Internal command failed"));
     else
-        unwrap(execvpe(file, argv, envp));
+        errreturn(logoserr(execvpe(file, argv, envp)));
     
     return 0;
 }
@@ -88,25 +90,64 @@ int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char
 int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
     // Ensure provided pipes are inherited
     if (pipe_in != STDIN_FILENO) 
-        unwrap(fcntl(pipe_in, F_SETFD, 0));
+        errreturn(logoserr(fcntl(pipe_in, F_SETFD, 0)));
     if (pipe_out != STDOUT_FILENO)
-        unwrap(fcntl(pipe_out, F_SETFD, 0));
+        errreturn(logoserr(fcntl(pipe_out, F_SETFD, 0)));
     
     // Run internal setup
-    int pid = unwrap(fork());
+    int pid = logoserr(fork());
     if (pid == 0)
         exit(exec_command(pipe_in, pipe_out, callback, file, argv, envp));
 
     // Close pipes so they don't get inherited later
     if (pipe_in != STDIN_FILENO)
-        unwrap(close(pipe_in));
+        errreturn(logoserr(close(pipe_in)));
     if (pipe_out != STDOUT_FILENO)
-        unwrap(close(pipe_out));
+        errreturn(logoserr(close(pipe_out)));
     
     return pid;
 }
 
-int wait_for_child(pid_t pid) {
-    int status;
-    return unwrap(waitpid(pid, &status, 0));
+int check_children(pid_t* children) {
+    while (*children != 0) {
+        if (*children != 1) {
+            int status;
+            int pid = logoserr(waitpid(pid, &status, WNOHANG));
+            errreturn(pid);
+            if (WIFEXITED(status)) {
+                *children = 1;
+                int exit_status = WEXITSTATUS(status);
+                log_info("Subprocess with pid %i finished with status code %i", pid, exit_status);
+                errreturn(exit_status);
+            }
+        }
+        children++;
+    }
+    return 0;
+}
+
+int wait_for_children(pid_t* children) {
+    while (*children != 0) {
+        if (*children != 1) {
+            int status;
+            int pid = logoserr(waitpid(pid, &status, 0));
+            errreturn(pid);
+            if (WIFEXITED(status)) {
+                *children = 1;
+                int exit_status = WEXITSTATUS(status);
+                log_info("Subprocess with pid %i finished with status code %i", pid, exit_status);
+                errreturn(exit_status);
+            }
+        }
+        children++;
+    }
+    return 0;
+}
+
+void kill_children(pid_t *children) {
+    while (*children != 0) {
+        if (*children != 1)
+            logoserr(kill(*children, SIGKILL));
+        children++;
+    }
 }

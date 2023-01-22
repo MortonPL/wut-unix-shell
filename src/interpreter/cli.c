@@ -15,17 +15,25 @@ void handleInput(ExecutionCtx* env, char* command) {
     }
 }
 
-void handleSignal(int signalNumber) {
+void killCommandsSignal(int signalNumber) {
     (void)signalNumber;
-    exit(-1);
+    kill_commands();
+}
+
+void childSignal(int signalNumber) {
+    (void)signalNumber;
+    printf("child process started");
 }
 
 void interface(const int isBatch, const char** argumentsValues) {
-    struct sigaction sa;
-    sa.sa_flags = SA_RESTART;
-    sa.sa_handler = handleSignal;
-    sigaction(SIGINT, &sa, NULL);
-    sigaction(SIGQUIT, &sa, NULL);
+    struct sigaction sa_kill, sa_child;
+    sa_kill.sa_flags = SA_RESTART;
+    sa_kill.sa_handler = killCommandsSignal;
+    sa_child.sa_flags = SA_RESTART;
+    sa_child.sa_handler = childSignal;
+    sigaction(SIGINT, &sa_kill, NULL);
+    sigaction(SIGQUIT, &sa_kill, NULL);
+    sigaction(SIGCHLD, &sa_child , NULL);
 
     MemContext context = MakeContext();
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);

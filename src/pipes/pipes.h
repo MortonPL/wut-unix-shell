@@ -40,7 +40,16 @@ typedef int (*InternalCommand)(const char *file, char *const *argv, char *const 
 /// @return Child PID on success, negative on error
 int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp);
 
-/// @brief Waits for child process with specific pid to finish
-/// @param pid PID of the child process
-/// @return Closed process status
-int wait_for_child(pid_t pid);
+/// @brief Check if any of the children finished or crashed
+/// @param children List of pids
+/// @return 0 if still running or exited, -1 on crashed
+int check_children(pid_t* children);
+
+/// @brief Wait for all of the children to finish
+/// @param children List of pids
+/// @return 0 if exited, -1 on crashed
+int wait_for_children(pid_t* children);
+
+/// @brief Signal all of the children to die
+/// @param children List of pids
+void kill_children(pid_t *children);

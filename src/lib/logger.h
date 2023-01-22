@@ -15,46 +15,76 @@ void init_logger();
 /// @brief Cleanup logger after app finished
 void drop_logger();
 
-/// @brief Internal function for leaving application after fatal exception
+/// @brief Log error message
 /// @param file Source file name from macro
 /// @param line Source line name from macro
 /// @param fmt Format schema
 /// @param ... Format args
-int __panic(const char *file, int line, const char *fmt, ...);
+void __panic(const char *file, int line, const char *fmt, ...);
 
-/// @brief Internal function for leaving application in case of error with custom message
+/// @brief Log error message on negative status code
 /// @param status_code Status code to check
 /// @param file Source file name from macro
 /// @param line Source line name from macro
 /// @param fmt Format schema
 /// @param ... Format args
 /// @returns Status code if non negative
-int __expect(int status_code, const char *file, int line, const char *fmt, ...);
+int __logerr(int status_code, const char *file, int line, const char *fmt, ...);
 
-/// @brief Internal function for leaving application in case of error with strerror message
+/// @brief Log system error message on negative status code
 /// @param status_code Status code to check
 /// @param file Source file name from macro
 /// @param line Source line name from macro
 /// @returns Status code if non negative
-int __unwrap(int status_code, const char *file, int line);
+int __logoserr(int status_code, const char *file, int line);
+
+/// @brief Log alloc error message on null pointer
+/// @param pointer Pointer
+/// @param file Source file name from macro
+/// @param line Source line name from macro
+/// @param ... Format args
+void *__notnull(void *pointer, const char *file, int line);
 
 extern const char *OsErrorMessage;
 
 #ifndef panic
 
-/// @brief Macro for leaving application after fatal exception
+/// @brief Log error message and return
 /// @param ... Same as printf args
-#define panic(...) (__panic(__FILE__, __LINE__, __VA_ARGS__))
+#define panic(...)                                \
+    do {                                          \
+        __panic(__FILE__, __LINE__, __VA_ARGS__); \
+        return -1;                                \
+    } while(0)
 
-/// @brief Macro for leaving application in case of error with custom message
+/// @brief Log error message on negative status code
 /// @param status_code Status code to check
 /// @param ... Same as printf args
 /// @returns Status code if non negative
-#define expect(status_code, ...) (__expect(status_code, __FILE__, __LINE__, __VA_ARGS__))
+#define logerr(status_code, ...) (__logerr(status_code, __FILE__, __LINE__, __VA_ARGS__))
 
-/// @brief Macro for leaving application in case of error with strerror message
+/// @brief Log system error message on negative status code
 /// @param status_code Status code to check
 /// @returns Status code if non negative
-#define unwrap(status_code) (__unwrap(status_code, __FILE__, __LINE__))
+#define logoserr(status_code) (__logoserr(status_code, __FILE__, __LINE__))
+
+/// @brief Log alloc error message on null pointer
+/// @param pointer Pointer
+/// @returns Pointer if not null
+#define notnull(pointer, ...) (__notnull(status_code, __FILE__, __LINE__))
+
+/// @brief Return on negative status code
+#define errreturn(status_code) \
+    do {                       \
+        if (status_code < 0)   \
+            return -1;         \
+    } while(0)
+
+/// @brief Return on null pointer
+#define nullreturn(pointer)  \
+    do {                     \
+        if (pointer == NULL) \
+            return NULL;     \
+    } while(0)
 
 #endif
