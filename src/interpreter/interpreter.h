@@ -2,24 +2,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "../lib/strpls.h"
 #include "../pipes/pipes.h"
 #include "../parser/interface.h"
 #include "../parser/structures.h"
 #include "../lib/mmem.h"
 
 typedef struct {
-    char key[256];
-    char value[256];
-} MapEntry;
+    int next_pipe_in;
+} ExecutionCtx;
 
 typedef struct {
-    char* cwd;
-    char previousWorkingDirectory[256];
-    int* childPid;
-    MapEntry variables[256];
-    int variableCount;
-} Env;
+    char **args;
+    char **eenv;
+    char *redir_in;
+    char *redir_out;
+} CommandCtx;
 
 // void changeDirectory(char* cwd, const char* path);
 
@@ -27,4 +24,4 @@ typedef struct {
 
 // void print(const char* prompt, const char* flags);
 
-void interpret(PipeExpression* prompt, Env* env);
+void interpret(PipeExpression* prompt, ExecutionCtx* env);

@@ -3,9 +3,7 @@
 #define COMMAND_SIZE 256
 #define FLAG_AMOUNT 2
 
-int CHILD_PID = -1;
-
-void handleInput(Env* env, char* command) {
+void handleInput(ExecutionCtx* env, char* command) {
     LexerState lexerState;
     InitializeLexer(&lexerState, command);
     PipeExpression *expression = ReadPipeExpression(&lexerState);
@@ -18,7 +16,8 @@ void handleInput(Env* env, char* command) {
 }
 
 void handleSignal(int signalNumber) {
-    kill(signalNumber, CHILD_PID);
+    (void)signalNumber;
+    exit(-1);
 }
 
 void interface(const int isBatch, const char** argumentsValues) {
@@ -32,28 +31,23 @@ void interface(const int isBatch, const char** argumentsValues) {
     char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
 
     // init Env
-    Env env;
-    env.cwd = (char*) AutoMalloc(context, COMMAND_SIZE, free);
-    env.childPid = &CHILD_PID;
-    env.variableCount = 0;
-    if (getcwd(env.cwd, COMMAND_SIZE) == NULL) {
-        exit(EXIT_FAILURE);
-    }
-    strcpy(env.previousWorkingDirectory, env.cwd);
+    ExecutionCtx ectx = {
+        .next_pipe_in = -1,
+    };
 
     // actual body
     if (isBatch) {
-        FILE* input = fmemopen(argumentsValues[isBatch], strlen(argumentsValues[isBatch]), "r");
+        FILE* input = fmemopen((void *)(argumentsValues[isBatch]), strlen(argumentsValues[isBatch]), "r");
         while (fgets(command, COMMAND_SIZE, input) != NULL) {
             if (strlen(command) == 0)
                 continue;
-            handleInput(&env, command);
+            handleInput(&ectx, command);
         }
     } else {
         while (strstr(command, "exit") != command) {
             printf("> ");
             fgets(command, COMMAND_SIZE, stdin);
-            handleInput(&env, command);
+            handleInput(&ectx, command);
         }
     }
     AutoExit(context);

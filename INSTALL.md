@@ -10,3 +10,8 @@ sudo apt-get install build-essential cmake flex
 # Flaga -t uruchamia testy (jeśli są zbudowane)
 ./build.sh release -c -t
 ```
+
+## Build & Run
+```
+./build.sh debug -c; ./debug/src/shell
+```

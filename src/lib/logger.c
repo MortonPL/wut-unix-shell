@@ -1,5 +1,7 @@
 #include "logger.h"
 
+const char *OsErrorMessage = "OS error: %s";
+
 void print_content(char *const *content) {
     if (content != NULL) {
         char *subcontent = content[0];
@@ -118,5 +120,5 @@ int __expect(int status_code, const char *file, int line, const char *fmt, ...) 
 }
 
 int __unwrap(int status_code, const char *file, int line) {
-    return __expect(status_code, file, line, "OS error: %s", strerror(errno));
+    return __expect(status_code, file, line, OsErrorMessage, strerror(errno));
 }

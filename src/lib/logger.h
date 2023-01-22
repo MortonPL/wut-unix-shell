@@ -38,6 +38,8 @@ int __expect(int status_code, const char *file, int line, const char *fmt, ...);
 /// @returns Status code if non negative
 int __unwrap(int status_code, const char *file, int line);
 
+extern const char *OsErrorMessage;
+
 #ifndef panic
 
 /// @brief Macro for leaving application after fatal exception

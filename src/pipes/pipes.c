@@ -17,19 +17,13 @@
 const char* Temp = "/tmp";
 const char* DevNull = "/dev/null";
 
-int devnull_in() {
-    return open(DevNull, O_WRONLY);
-}
-
-int devnull_out() {
-    return open(DevNull, O_WRONLY);
-}
-
 int file_in(char* file) {
+    log_info("In file: '%s'", file);
     return open(file, O_RDONLY);
 }
 
 int file_out(char* file) {
+    log_info("Out file: '%s'", file);
     return open(file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
@@ -95,7 +89,7 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
     // Ensure provided pipes are inherited
     if (pipe_in != STDIN_FILENO) 
         unwrap(fcntl(pipe_in, F_SETFD, 0));
-    if (pipe_in != STDOUT_FILENO)
+    if (pipe_out != STDOUT_FILENO)
         unwrap(fcntl(pipe_out, F_SETFD, 0));
     
     // Run internal setup
@@ -106,7 +100,7 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
     // Close pipes so they don't get inherited later
     if (pipe_in != STDIN_FILENO)
         unwrap(close(pipe_in));
-    if (pipe_in != STDOUT_FILENO)
+    if (pipe_out != STDOUT_FILENO)
         unwrap(close(pipe_out));
     
     return pid;
@@ -114,6 +108,5 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
 
 int wait_for_child(pid_t pid) {
     int status;
-    waitpid(pid, &status, 0);
-    return status;
+    return unwrap(waitpid(pid, &status, 0));
 }
