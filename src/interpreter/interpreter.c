@@ -379,7 +379,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     }
     else {
         log_info("Running external command '%s'", cmd);
-        expect(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run external command");
+        expect(attach_command(pipe_in, pipe_out, NULL, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run external command");
     }
 
     return 0;
