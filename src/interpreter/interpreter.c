@@ -401,7 +401,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     }
 
     if (ectx->next_pipe_in > 0)
-        wait_fd_ready(ectx->next_pipe_in);
+        errreturn(wait_fd_ready(ectx->next_pipe_in));
 
     errreturn(check_children(children));
 
@@ -423,6 +423,22 @@ int count_commands(CommandExpression **cmd_expr) {
     while (*cmd_expr++ != NULL)
         count++;
     return count;
+}
+
+int inner_interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx, CommandCtx **cctxs, CommandExpression **cmd_expr) {
+    errreturn(run_command(ectx, cctxs[0], cctxs[1]));
+
+    while (cctxs[1] != NULL) {
+        free_command(cctxs[0]);
+
+        CommandCtx *cmd_temp = cctxs[0];
+        cctxs[0] = cctxs[1];
+        cctxs[1] = (*cmd_expr != NULL)
+            ? iter_process_command(&cmd_expr, cmd_temp)
+            : NULL;
+
+        errreturn(run_command(ectx, cctxs[0], cctxs[1]));
+    }
 }
 
 /// @brief Interpret a pipe expression
@@ -453,23 +469,14 @@ void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
     if (*cmd_expr != NULL)
         cctxs[1] = iter_process_command(&cmd_expr, &cmd2);
 
-    run_command(ectx, cctxs[0], cctxs[1]);
-
-    while (cctxs[1] != NULL) {
-        free_command(cctxs[0]);
-
-        CommandCtx *cmd_temp = cctxs[0];
-        cctxs[0] = cctxs[1];
-        cctxs[1] = (*cmd_expr != NULL)
-            ? iter_process_command(&cmd_expr, cmd_temp)
-            : NULL;
-
-        run_command(ectx, cctxs[0], cctxs[1]);
-    }
+    int res = inner_interpret(pipe_expr, ectx, cctxs, cmd_expr);
+    if (res < 0)
+        log_info("Execution of commands failed.");
 
     wait_for_children(children);
     free_command(cctxs[0]);
     free(children);
+    children = NULL;
 }
 
 void kill_commands() {

@@ -20,11 +20,6 @@ void killCommandsSignal(int signalNumber) {
     kill_commands();
 }
 
-void childSignal(int signalNumber) {
-    (void)signalNumber;
-    printf("child process started");
-}
-
 void interface(const int isBatch, const char** argumentsValues) {
     struct sigaction sa_kill;
     sa_kill.sa_flags = SA_RESTART;

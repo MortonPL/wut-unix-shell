@@ -109,6 +109,7 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
 }
 
 int check_children(pid_t* children) {
+    log_trace("Checking children");
     while (*children != 0) {
         if (*children != 1) {
             int status;
@@ -127,6 +128,7 @@ int check_children(pid_t* children) {
 }
 
 int wait_for_children(pid_t* children) {
+    log_trace("Waiting for children");
     while (*children != 0) {
         if (*children != 1) {
             int status;
@@ -145,11 +147,14 @@ int wait_for_children(pid_t* children) {
 }
 
 void kill_children(pid_t *children) {
-    while (*children != 0) {
-        if (*children != 1) {
-            log_info("Killing subprocess with pid %i");
-            logoserr(kill(*children, SIGKILL));
+    log_trace("Killing children");
+    if (children != NULL) {
+        while (*children != 0) {
+            if (*children != 1) {
+                log_info("Killing subprocess with pid %i", *children);
+                logoserr(kill(*children, SIGKILL));
+            }
+            children++;
         }
-        children++;
     }
 }
