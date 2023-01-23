@@ -28,7 +28,7 @@ int create_pipe_pair(int *pipe_in, int *pipe_out);
 int wait_fd_ready(int fd);
 
 /// @brief Signature of a function that can be executed as a command
-typedef int (*InternalCommand)(const char *file, char *const *argv, char *const *envp);
+typedef int (*InternalCommand)(const char *file, char *const *argv);
 
 /// @brief Creates a child process to run a command
 /// @param pipe_in Stdin of the child process, will be closed

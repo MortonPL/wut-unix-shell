@@ -1,5 +1,3 @@
-#define _GNU_SOURCE
-
 #include "pipes.h"
 #include "stdio.h"
 #include "uuid/uuid.h"
@@ -75,7 +73,7 @@ int wait_fd_ready(int fd) {
     return 0;
 }
 
-int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
+int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv) {
     // Overwrite standard pipes and close the provided ones if necessary
     if (pipe_in != STDIN_FILENO) {
         errreturn(logoserr(dup2(pipe_in, STDIN_FILENO)));
@@ -88,9 +86,9 @@ int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char
 
     // Run internal or external command
     if (callback != NULL)
-        errreturn(logerr(callback(file, argv, envp), "Internal command failed"));
+        errreturn(logerr(callback(file, argv), "Internal command failed"));
     else
-        errreturn(logoserr(execvpe(file, argv, envp)));
+        errreturn(logoserr(execvp(file, argv)));
     
     return 0;
 }
@@ -104,8 +102,12 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
     
     // Run internal setup
     int pid = logoserr(fork());
-    if (pid == 0)
-        exit(exec_command(pipe_in, pipe_out, callback, file, argv, envp));
+    if (pid == 0) {
+        char *const *envp_iter = envp;
+        while (*envp_iter != NULL)
+            putenv(*envp_iter++);
+        exit(exec_command(pipe_in, pipe_out, callback, file, argv));
+    }
 
     // Close pipes so they don't get inherited later
     if (pipe_in != STDIN_FILENO)

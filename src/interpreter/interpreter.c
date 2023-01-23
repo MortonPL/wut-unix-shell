@@ -5,8 +5,8 @@
 
 pid_t* children = NULL;
 
-int cd_cmd(const char *file, char* const* argv, char* const* envp) {
-    (void)file, (void)envp;
+int cd_cmd(const char *file, char* const* argv) {
+    (void)file;
     argv++;
     if (*argv == NULL)
         panic("missing required argument");
@@ -27,8 +27,8 @@ int cd_cmd(const char *file, char* const* argv, char* const* envp) {
 
 #define MAX_PATH 1024
 
-int pwd_cmd(const char *file, char* const* argv, char* const* envp) {
-    (void)file, (void)argv, (void)envp;
+int pwd_cmd(const char *file, char* const* argv) {
+    (void)file, (void)argv;
     char buf[MAX_PATH];
 
     char *res = getcwd(buf, MAX_PATH);
@@ -39,8 +39,8 @@ int pwd_cmd(const char *file, char* const* argv, char* const* envp) {
     return 0;
 }
 
-int echo_cmd(const char *file, char* const* argv, char* const* envp) {
-    (void)file, (void)envp;
+int echo_cmd(const char *file, char* const* argv) {
+    (void)file;
     argv++;
     while (*argv != NULL) {
         printf("%s ", *argv);
@@ -386,7 +386,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     pid_t pid = 0;
     if (strcmp(cmd, "cd") == 0) {
         log_info("Running internal command '%s'", cmd);
-        errreturn(logerr(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command"));
+        errreturn(logerr(cd_cmd(cmd, curr_cctx->args), "failed to run internal command"));
     } else if (strcmp(cmd, "echo") == 0) {
         log_info("Running internal command '%s'", cmd);
         pid = logerr(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
