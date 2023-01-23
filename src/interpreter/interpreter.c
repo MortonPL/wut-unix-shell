@@ -8,6 +8,10 @@ pid_t* children = NULL;
 size_t lenv_size = 0;
 char **lenv = NULL;
 
+/// @brief Built-in cd command
+/// @param file The name of executed file.
+/// @param argv Program arguments.
+/// @param envp Additional environment variables.
 int cd_cmd(const char *file, char* const* argv, char* const* envp) {
     (void)file, (void)envp;
     argv++;
@@ -59,6 +63,10 @@ static char *copyString(const char *pSource)
     return pCopy;
 }
 
+/// @brief Built-in export command
+/// @param file The name of executed file.
+/// @param argv Program arguments.
+/// @param envp Additional environment variables.
 int export_cmd(const char *file, char* const* argv, char* const* envp) {
     (void)file;
     argv++;
@@ -102,6 +110,9 @@ int export_cmd(const char *file, char* const* argv, char* const* envp) {
 
 #define MAX_PATH 1024
 
+/// @brief Built-in pwd command
+/// @param file The name of executed file.
+/// @param argv Program arguments.
 int pwd_cmd(const char *file, char* const* argv) {
     (void)file, (void)argv;
     char buf[MAX_PATH];
@@ -116,6 +127,9 @@ int pwd_cmd(const char *file, char* const* argv) {
     return 0;
 }
 
+/// @brief Built-in echo command
+/// @param file The name of executed file.
+/// @param argv Program arguments.
 int echo_cmd(const char *file, char* const* argv) {
     (void)file;
     argv++;
