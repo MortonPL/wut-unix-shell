@@ -151,8 +151,8 @@ static void getCommandWordLength(CommandCtx* cctx, CommandWord *word, size_t *ba
             char *env_var = env_get(cctx->eenv, (*els)->Value + 1);
             if (env_var != NULL) {
                 size_t var_len = strlen(env_var);
-                baseLen += var_len;
-                slashEscapedLen += var_len;
+                *baseLen += var_len;
+                *slashEscapedLen += var_len;
             }
         } else {
             *baseLen += (*els)->Length;
