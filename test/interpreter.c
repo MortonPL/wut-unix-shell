@@ -49,15 +49,3 @@ TEST(InterpreterTestSuite, externalFunTest) {
 
     remove("aVeryTempDir");
 }
-
-/* NOTE fails for a most puzzling reason, despite working as intended in action
-TEST(InterpreterTestSuite, redirectingTest) {
-    runInterpreter("echo aaa > aVeryTempFile.txt");
-    int fileDescriptor = open("aVeryTempFile.txt", O_RDONLY);
-    char buffer[64] = {0}; 
-    CHECK_EQ(read(fileDescriptor, buffer, 64), 3);
-    CHECK_STREQ(buffer, "aaa");
-    close(fileDescriptor);
-    //remove("aVeryTempFile.txt");
-}
-*/

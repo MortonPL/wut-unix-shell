@@ -13,5 +13,5 @@ sudo apt-get install build-essential cmake flex
 
 ## Build & Run
 ```
-./build.sh debug -c; ./debug/src/shell
+./build.sh release -c; ./release/src/shell
 ```
