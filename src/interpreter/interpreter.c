@@ -17,7 +17,11 @@ int cd_cmd(const char *file, char* const* argv, char* const* envp) {
     if (*argv != NULL)
         panic("too many arguments");
 
-    logoserr(chdir(new_dir));
+    errno = 0;
+    if (logoserr(chdir(new_dir)) == -1) {
+        perror("cd failed");
+        return -1;
+    }
     return 0;
 }
 
@@ -382,7 +386,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     pid_t pid = 0;
     if (strcmp(cmd, "cd") == 0) {
         log_info("Running internal command '%s'", cmd);
-        logerr(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
+        errreturn(logerr(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command"));
     } else if (strcmp(cmd, "echo") == 0) {
         log_info("Running internal command '%s'", cmd);
         pid = logerr(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");

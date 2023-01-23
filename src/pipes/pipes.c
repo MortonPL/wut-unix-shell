@@ -57,13 +57,14 @@ int wait_fd_ready(int fd) {
     };
 
     int res = poll(&pfd, 1, -1);
-    if (res < 0)
+    if (res < 0) {
         if (errno != EINTR)
             errreturn(logoserr(res));
         else {
             log_info("Poll interrupted");
             return -1;
         }
+    }
 
     if (pfd.events & POLLERR)
         panic("Fifo has no reader");
