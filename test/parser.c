@@ -6,32 +6,32 @@
 // Or: ./tau/docs/tau-primer.md
 
 
-void CHECK_PIPE_EXPR(PipeExpression* expression, int length) {
+void CHECK_PIPE_EXPR(PipeExpression* expression, size_t length) {
     CHECK_NOT_NULL(expression);
     CHECK_EQ(expression->Length, length);
     CHECK_NOT_NULL(expression->Commands);
-    for (int i=0; i<length; i++) {
+    for (size_t i=0; i<length; i++) {
         CHECK_NOT_NULL(expression->Commands[i]);
     }
 }
 
-void CHECK_COMM_EXPR(CommandExpression* expression, int length) {
+void CHECK_COMM_EXPR(CommandExpression* expression, size_t length) {
     CHECK_NOT_NULL(expression);
     CHECK_EQ(expression->Length, length);
     CHECK_NOT_NULL(expression->Words);
-    for (int i=0; i<length; i++) {
+    for (size_t i=0; i<length; i++) {
         CHECK_NOT_NULL(expression->Words[i]);
     }
 }
 
-void CHECK_COMM_WORD(CommandWord* expression, CommandWordType type, int length) {
+void CHECK_COMM_WORD(CommandWord* expression, CommandWordType type, size_t length) {
     CHECK_NOT_NULL(expression);
     CHECK_EQ(expression->Type, type);
     CHECK_EQ(expression->Length, length);
     CHECK_NOT_NULL(expression->Elements);
 }
 
-void CHECK_WORD_ELEM(WordElement* elem, char* value, WordElementType type, int length) {
+void CHECK_WORD_ELEM(WordElement* elem, char* value, WordElementType type, size_t length) {
     CHECK_NOT_NULL(elem);
     CHECK_STREQ(elem->Value, value);
     CHECK_EQ(elem->Type, type);

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
-#include "../lib/mmem.h"
 #include "../parser/interface.h"
 #include "interpreter.h"
 

@@ -1,6 +1,6 @@
 #include "cli.h"
 
-#define COMMAND_SIZE 256
+#define COMMAND_SIZE 4096
 #define FLAG_AMOUNT 2
 
 void handleInput(ExecutionCtx* env, char* command) {
@@ -8,7 +8,9 @@ void handleInput(ExecutionCtx* env, char* command) {
     InitializeLexer(&lexerState, command);
     PipeExpression *expression = ReadPipeExpression(&lexerState);
     while (expression != NULL) {
+#ifdef DEBUG
         PrintPipeExpression(expression, 0);
+#endif
         interpret(expression, env);
         DeletePipeExpression(expression);
         expression = ReadPipeExpression(&lexerState);
@@ -27,8 +29,7 @@ void interface(const int isBatch, const char** argumentsValues) {
     sigaction(SIGINT, &sa_kill, NULL);
     sigaction(SIGQUIT, &sa_kill, NULL);
 
-    MemContext context = MakeContext();
-    char* command = (char*) AutoMalloc(context, COMMAND_SIZE, free);
+    char command[COMMAND_SIZE];
 
     // init Env
     ExecutionCtx ectx = {
@@ -46,9 +47,8 @@ void interface(const int isBatch, const char** argumentsValues) {
     } else {
         while (strstr(command, "exit") != command) {
             printf("> ");
-            fgets(command, COMMAND_SIZE, stdin);
-            handleInput(&ectx, command);
+            if (fgets(command, COMMAND_SIZE, stdin) != NULL)
+                handleInput(&ectx, command);
         }
     }
-    AutoExit(context);
 }

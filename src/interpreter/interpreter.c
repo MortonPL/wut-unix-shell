@@ -374,7 +374,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     pid_t pid = 0;
     if (strcmp(cmd, "cd") == 0) {
         log_info("Running internal command '%s'", cmd);
-        int status = logerr(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
+        logerr(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
     } else if (strcmp(cmd, "echo") == 0) {
         log_info("Running internal command '%s'", cmd);
         pid = logerr(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
@@ -418,14 +418,15 @@ CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx
     return cctx;
 }
 
-int count_commands(CommandExpression **cmd_expr) {
-    int count = 0;
+size_t count_commands(CommandExpression **cmd_expr) {
+    size_t count = 0;
     while (*cmd_expr++ != NULL)
         count++;
     return count;
 }
 
 int inner_interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx, CommandCtx **cctxs, CommandExpression **cmd_expr) {
+    (void)pipe_expr;
     errreturn(run_command(ectx, cctxs[0], cctxs[1]));
 
     while (cctxs[1] != NULL) {
@@ -439,13 +440,14 @@ int inner_interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx, CommandCtx **
 
         errreturn(run_command(ectx, cctxs[0], cctxs[1]));
     }
+    return 0;
 }
 
 /// @brief Interpret a pipe expression
 /// @param pipe_expr The pipe expression
 /// @param ectx Execution context
 void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
-    int command_count = count_commands(pipe_expr->Commands);
+    size_t command_count = count_commands(pipe_expr->Commands);
     children = calloc(command_count + 1, sizeof(int));
 
     CommandCtx cmd1 = {

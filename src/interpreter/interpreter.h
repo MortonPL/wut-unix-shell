@@ -5,7 +5,6 @@
 #include "../pipes/pipes.h"
 #include "../parser/interface.h"
 #include "../parser/structures.h"
-#include "../lib/mmem.h"
 
 typedef struct {
     int next_pipe_in;

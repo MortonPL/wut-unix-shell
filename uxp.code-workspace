@@ -55,7 +55,6 @@
 		"files.associations": {
 			"*.ron": "ron",
 			"*.luac": "lua",
-			"mmem.h": "c",
 			"log.h": "c",
 			"type_traits": "c"
 		},
