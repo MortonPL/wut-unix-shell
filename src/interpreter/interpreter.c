@@ -212,12 +212,14 @@ char* env_get(char **env, char *key) {
         }
         env_iter++;
     }
-    char **lenv_iter = lenv;
-    while (*lenv_iter != NULL) {
-        if (strncmp(key, *lenv_iter, len) == 0 && (*lenv_iter)[len] == '=') {
-            return *lenv_iter + len + 1;
+    if (lenv != NULL) {
+        char **lenv_iter = lenv;
+        while (*lenv_iter != NULL) {
+            if (strncmp(key, *lenv_iter, len) == 0 && (*lenv_iter)[len] == '=') {
+                return *lenv_iter + len + 1;
+            }
+            lenv_iter++;
         }
-        lenv_iter++;
     }
     env_iter = environ;
     while (*env_iter != NULL) {
