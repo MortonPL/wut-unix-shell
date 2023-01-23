@@ -5,6 +5,8 @@
 #include "../lib/log.c/src/log.h"
 
 pid_t* children = NULL;
+size_t lenv_size = 0;
+char **lenv = NULL;
 
 int cd_cmd(const char *file, char* const* argv, char* const* envp) {
     (void)file, (void)envp;
@@ -195,6 +197,13 @@ char* env_get(char **env, char *key) {
             return *env_iter + len + 1;
         }
         env_iter++;
+    }
+    char **lenv_iter = lenv;
+    while (*lenv_iter != NULL) {
+        if (strncmp(key, *lenv_iter, len) == 0 && (*lenv_iter)[len] == '=') {
+            return *lenv_iter + len + 1;
+        }
+        lenv_iter++;
     }
     env_iter = environ;
     while (*env_iter != NULL) {
@@ -443,8 +452,36 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     // Check existence of command
     char *cmd = curr_cctx->args[0];
     if (cmd == NULL) {
-        printf("no command provided");
-        panic("no command provided");
+        if (curr_cctx->eenv[0] != NULL) {
+            // No command, just shell process-local env vars
+            char **env_iter = curr_cctx->eenv;
+            int i = 0;
+            while (*env_iter != NULL) {
+                size_t key_len = (size_t)(strchr(*env_iter, '=') - *env_iter);
+                char **lenv_iter = lenv;
+                if (lenv != NULL) {
+                    while (*lenv_iter != NULL && (strncmp(*lenv_iter, *env_iter, key_len) != 0 || (*lenv_iter)[key_len] != '=')) {
+                        lenv_iter++;
+                    }
+                }
+                if (lenv_iter != NULL && *lenv_iter != NULL) {
+                    free(*lenv_iter);
+                    *lenv_iter = env_iter[i];
+                } else {
+                    lenv_size++;
+                    lenv = realloc(lenv, (lenv_size + 1) * sizeof(char *));
+                    lenv[lenv_size] = NULL;
+                    lenv[lenv_size - 1] = env_iter[i];
+                }
+                env_iter[i] = NULL;
+                env_iter++;
+                i++;
+            }
+            return 0;
+        } else {
+            printf("no command provided");
+            panic("no command provided");
+        }
     }
 
     // Run commands
