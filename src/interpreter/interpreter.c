@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <glob.h>
 #include "cli.h"
 #include "../lib/logger.h"
@@ -5,23 +6,95 @@
 
 pid_t* children = NULL;
 
-int cd_cmd(const char *file, char* const* argv) {
-    (void)file;
+int cd_cmd(const char *file, char* const* argv, char* const* envp) {
+    (void)file, (void)envp;
     argv++;
-    if (*argv == NULL)
+    if (*argv == NULL) {
+        fputs("cd failed: missing required argument\n", stderr);
         panic("missing required argument");
+    }
 
     char *new_dir = *argv;
 
     argv++;
-    if (*argv != NULL)
+    if (*argv != NULL) {
+        fputs("cd failed: too many argument\n", stderr);
         panic("too many arguments");
+    }
 
     errno = 0;
     if (logoserr(chdir(new_dir)) == -1) {
         perror("cd failed");
         return -1;
     }
+    return 0;
+}
+
+static bool is_identifier(const char *str, long len)
+{
+    if (len == 0)
+        return false;
+    if (!isalpha(str[0]) && str[0] != '_')
+        return false;
+    for (long i = 0; i < len; i++)
+        if (!isalnum(str[i]) && str[i] != '_')
+            return false;
+    return true;
+}
+
+static size_t min(size_t a, size_t b)
+{
+    return a < b ? a : b;
+}
+
+static char *copyString(const char *pSource)
+{
+    size_t strLength = strlen(pSource);
+    char *pCopy = (char *)malloc(strLength + 1);
+    if (pCopy == NULL)
+        return NULL;
+    memcpy(pCopy, pSource, strLength + 1);
+    return pCopy;
+}
+
+int export_cmd(const char *file, char* const* argv, char* const* envp) {
+    (void)file;
+    argv++;
+    if (*argv == NULL) {
+        fputs("export failed: missing required argument\n", stderr);
+        panic("missing required argument");
+    }
+
+    while (*argv != NULL) {
+        char *eq_pos = strchr(*argv, '=');
+        if (eq_pos != NULL && is_identifier(*argv, eq_pos - *argv)) {
+            errno = 0;
+            char *exported_var = copyString(*argv);
+            log_trace("Exporting env: %s", exported_var);
+            if (logoserr(putenv(exported_var)) == -1) {
+                perror("export failed");
+                return -1;
+            }
+            argv++;
+            continue;
+        }
+        char *const *envp_iter = envp;
+        while (*envp_iter != NULL) {
+            eq_pos = strchr(*envp_iter, '=');
+            if (eq_pos != NULL && memcmp(*argv, *envp_iter, min(strlen(*argv), (size_t)(eq_pos - *envp_iter))) == 0) {
+                char *exported_var = copyString(*envp_iter);
+                log_trace("Exporting env: %s", exported_var);
+                if (logoserr(putenv(exported_var)) == -1) {
+                    perror("export failed");
+                    return -1;
+                }
+                break;
+            }
+            envp_iter++;
+        }
+        argv++;
+    }
+
     return 0;
 }
 
@@ -32,8 +105,10 @@ int pwd_cmd(const char *file, char* const* argv) {
     char buf[MAX_PATH];
 
     char *res = getcwd(buf, MAX_PATH);
-    if (res != buf)
+    if (res != buf) {
+        perror("pwd failed");
         panic(OsErrorMessage, strerror(errno));
+    }
 
     printf("%s\n", buf);
     return 0;
@@ -129,16 +204,6 @@ char* env_get(char **env, char *key) {
         env_iter++;
     }
     return NULL;
-}
-
-static char *copyString(const char *pSource)
-{
-    size_t strLength = strlen(pSource);
-    char *pCopy = (char *)malloc(strLength + 1);
-    if (pCopy == NULL)
-        return NULL;
-    memcpy(pCopy, pSource, strLength + 1);
-    return pCopy;
 }
 
 // does not append null terminator
@@ -386,7 +451,10 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     pid_t pid = 0;
     if (strcmp(cmd, "cd") == 0) {
         log_info("Running internal command '%s'", cmd);
-        errreturn(logerr(cd_cmd(cmd, curr_cctx->args), "failed to run internal command"));
+        errreturn(logerr(cd_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command"));
+    } else if (strcmp(cmd, "export") == 0) {
+        log_info("Running internal command '%s'", cmd);
+        errreturn(logerr(export_cmd(cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command"));
     } else if (strcmp(cmd, "echo") == 0) {
         log_info("Running internal command '%s'", cmd);
         pid = logerr(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");

@@ -93,6 +93,16 @@ int exec_command(int pipe_in, int pipe_out, InternalCommand callback, const char
     return 0;
 }
 
+static char *copyString(const char *pSource)
+{
+    size_t strLength = strlen(pSource);
+    char *pCopy = (char *)malloc(strLength + 1);
+    if (pCopy == NULL)
+        return NULL;
+    memcpy(pCopy, pSource, strLength + 1);
+    return pCopy;
+}
+
 int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const char *file, char *const *argv, char *const *envp) {
     // Ensure provided pipes are inherited
     if (pipe_in != STDIN_FILENO) 
@@ -104,8 +114,10 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
     int pid = logoserr(fork());
     if (pid == 0) {
         char *const *envp_iter = envp;
-        while (*envp_iter != NULL)
-            putenv(*envp_iter++);
+        while (*envp_iter != NULL) {
+            char *envp_elem = copyString(*envp_iter++);
+            putenv(envp_elem);
+        }
         exit(exec_command(pipe_in, pipe_out, callback, file, argv));
     }
 
