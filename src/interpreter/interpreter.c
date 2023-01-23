@@ -378,7 +378,6 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     } else if (strcmp(cmd, "echo") == 0) {
         log_info("Running internal command '%s'", cmd);
         pid = logerr(attach_command(pipe_in, pipe_out, echo_cmd, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run internal command");
-        log_trace("%i", pid);
         errreturn(pid);
     } else if (strcmp(cmd, "pwd") == 0) {
         log_info("Running internal command '%s'", cmd);
@@ -389,11 +388,12 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         pid = logerr(attach_command(pipe_in, pipe_out, NULL, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run external command");
         errreturn(pid);
     }
+    log_trace("%i", pid);
 
     if (pid != 0) {
         int child_idx = 0;
         pid_t *child_iter = children;
-        while (*child_iter != 0) {
+        while (*child_iter > 1) {
             child_idx++;
             child_iter++;
         }
@@ -403,7 +403,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
     if (ectx->next_pipe_in > 0)
         wait_fd_ready(ectx->next_pipe_in);
 
-    errreturn(logoserr(check_children(children)));
+    errreturn(check_children(children));
 
     return 0;
 }

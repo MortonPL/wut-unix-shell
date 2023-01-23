@@ -112,9 +112,9 @@ int check_children(pid_t* children) {
     while (*children != 0) {
         if (*children != 1) {
             int status;
-            int pid = logoserr(waitpid(pid, &status, WNOHANG));
+            int pid = logoserr(waitpid(*children, &status, WNOHANG));
             errreturn(pid);
-            if (WIFEXITED(status)) {
+            if (pid != 0 && WIFEXITED(status)) {
                 *children = 1;
                 int exit_status = WEXITSTATUS(status);
                 log_info("Subprocess with pid %i finished with status code %i", pid, exit_status);
@@ -130,7 +130,7 @@ int wait_for_children(pid_t* children) {
     while (*children != 0) {
         if (*children != 1) {
             int status;
-            int pid = logoserr(waitpid(pid, &status, 0));
+            int pid = logoserr(waitpid(*children, &status, 0));
             errreturn(pid);
             if (WIFEXITED(status)) {
                 *children = 1;
@@ -146,8 +146,10 @@ int wait_for_children(pid_t* children) {
 
 void kill_children(pid_t *children) {
     while (*children != 0) {
-        if (*children != 1)
+        if (*children != 1) {
+            log_info("Killing subprocess with pid %i");
             logoserr(kill(*children, SIGKILL));
+        }
         children++;
     }
 }
