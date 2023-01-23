@@ -56,8 +56,15 @@ int wait_fd_ready(int fd) {
         .events = POLLIN,
     };
 
-    errreturn(logoserr(poll(&pfd, 1, -1)));
-    
+    int res = poll(&pfd, 1, -1);
+    if (res < 0)
+        if (errno != EINTR)
+            errreturn(logoserr(res));
+        else {
+            log_info("Poll interrupted");
+            return -1;
+        }
+
     if (pfd.events & POLLERR)
         panic("Fifo has no reader");
     
@@ -104,13 +111,15 @@ int attach_command(int pipe_in, int pipe_out, InternalCommand callback, const ch
         errreturn(logoserr(close(pipe_in)));
     if (pipe_out != STDOUT_FILENO)
         errreturn(logoserr(close(pipe_out)));
-    
+
+    log_trace("Spawned child %s as %i", file, pid);
     return pid;
 }
 
 int check_children(pid_t* children) {
     log_trace("Checking children");
     while (*children != 0) {
+        log_trace("Checking child %i", *children);
         if (*children != 1) {
             int status;
             int pid = logoserr(waitpid(*children, &status, WNOHANG));
@@ -130,6 +139,7 @@ int check_children(pid_t* children) {
 int wait_for_children(pid_t* children) {
     log_trace("Waiting for children");
     while (*children != 0) {
+        log_trace("Waiting for child %i", *children);
         if (*children != 1) {
             int status;
             int pid = logoserr(waitpid(*children, &status, 0));

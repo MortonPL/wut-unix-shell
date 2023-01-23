@@ -94,11 +94,14 @@ extern char **environ;
 /// @param cctx Command context
 /// @param args_count Args count
 /// @param eenv_count Eenv count
-void subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count) {
+CommandCtx* subprocess_allocate(CommandCtx* cctx, size_t args_count, size_t eenv_count) {
     cctx->args = malloc((args_count + 1) * sizeof(char*));
+    nullreturn(cctx->args);
     (cctx->args)[args_count] = NULL;
     cctx->eenv = malloc((eenv_count + 1) * sizeof(char*));
+    nullreturn(cctx->eenv);
     (cctx->eenv)[eenv_count] = NULL;
+    return cctx;
 }
 
 /// @brief Returns the value of a key in environment
@@ -243,10 +246,10 @@ char **process_word(CommandCtx* cctx, CommandWord *word, size_t *returnedCount, 
 /// @brief Fill command ctx with information from command expression
 /// @param cctx Context to fill
 /// @param cmd_expr Command expression to consume
-void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
+CommandExpression *process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
     size_t args_count = 0, eenv_count = 0;
     subprocess_args_eenv_counts(cmd_expr, &args_count, &eenv_count);
-    subprocess_allocate(cctx, args_count, eenv_count);
+    nullreturn(subprocess_allocate(cctx, args_count, eenv_count));
 
     size_t args_i = 0, eenv_i = 0;
     CommandWord **words = cmd_expr->Words;
@@ -257,11 +260,13 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
         switch (word->Type) {
             case CW_ASSIGNMENT:
                 pArgs = process_word(cctx, word, &returnedCount, args_i > 0);
+                nullreturn(pArgs);
                 cctx->eenv[eenv_i++] = pArgs[0];
                 free(pArgs);
                 break;
             case CW_BASIC: {
                 pArgs = process_word(cctx, word, &returnedCount, args_i > 0);
+                nullreturn(pArgs);
                 if (returnedCount > 1) {
                     args_count += returnedCount - 1;
                     cctx->args = (char **)realloc(cctx->args, sizeof(char *) * (args_count + 1));
@@ -276,6 +281,7 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
                 if (cctx->redir_in != NULL)
                     free(cctx->redir_in);
                 pArgs = process_word(cctx, word, &returnedCount, false);
+                nullreturn(pArgs);
                 cctx->redir_in = pArgs[0];
                 free(pArgs);
                 break;
@@ -283,11 +289,13 @@ void process_command(CommandCtx* cctx, CommandExpression *cmd_expr) {
                 if (cctx->redir_out != NULL)
                     free(cctx->redir_out);
                 pArgs = process_word(cctx, word, &returnedCount, false);
+                nullreturn(pArgs);
                 cctx->redir_out = pArgs[0];
                 free(pArgs);
                 break;
         }
     }
+    return cmd_expr;
 }
 
 /// @brief Free command ctx struct
@@ -388,7 +396,6 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
         pid = logerr(attach_command(pipe_in, pipe_out, NULL, cmd, curr_cctx->args, curr_cctx->eenv), "failed to run external command");
         errreturn(pid);
     }
-    log_trace("%i", pid);
 
     if (pid != 0) {
         int child_idx = 0;
@@ -413,7 +420,7 @@ int run_command(ExecutionCtx* ectx, CommandCtx* curr_cctx, CommandCtx* next_cctx
 /// @param cctx Command to fill
 /// @return Pointer to the same command
 CommandCtx *iter_process_command(CommandExpression ***cmd_expr, CommandCtx *cctx) {
-    process_command(cctx, **cmd_expr);
+    nullreturn(process_command(cctx, **cmd_expr));
     *cmd_expr += 1;
     return cctx;
 }
@@ -425,20 +432,25 @@ size_t count_commands(CommandExpression **cmd_expr) {
     return count;
 }
 
-int inner_interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx, CommandCtx **cctxs, CommandExpression **cmd_expr) {
-    (void)pipe_expr;
-    errreturn(run_command(ectx, cctxs[0], cctxs[1]));
+int inner_interpret(ExecutionCtx* ectx, CommandCtx **cctxs, CommandExpression **cmd_expr) {
+    errreturn(logerr(run_command(ectx, cctxs[0], cctxs[1]), "Failed to run command"));
 
     while (cctxs[1] != NULL) {
         free_command(cctxs[0]);
 
         CommandCtx *cmd_temp = cctxs[0];
         cctxs[0] = cctxs[1];
-        cctxs[1] = (*cmd_expr != NULL)
-            ? iter_process_command(&cmd_expr, cmd_temp)
-            : NULL;
+        if (*cmd_expr != NULL) {
+            CommandCtx *processed_cmd = iter_process_command(&cmd_expr, cmd_temp);
+            if (processed_cmd == NULL) {
+                panic("Failed to process command");
+            }
+            cctxs[1] = processed_cmd;
+        } else {
+            cctxs[1] = NULL;
+        }
 
-        errreturn(run_command(ectx, cctxs[0], cctxs[1]));
+        errreturn(logerr(run_command(ectx, cctxs[0], cctxs[1]), "Failed to run command"));
     }
     return 0;
 }
@@ -471,9 +483,11 @@ void interpret(PipeExpression* pipe_expr, ExecutionCtx* ectx) {
     if (*cmd_expr != NULL)
         cctxs[1] = iter_process_command(&cmd_expr, &cmd2);
 
-    int res = inner_interpret(pipe_expr, ectx, cctxs, cmd_expr);
-    if (res < 0)
+    int res = inner_interpret(ectx, cctxs, cmd_expr);
+    if (res < 0) {
         log_info("Execution of commands failed.");
+        kill_children(children);
+    }
 
     wait_for_children(children);
     free_command(cctxs[0]);
